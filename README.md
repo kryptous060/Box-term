@@ -45,10 +45,17 @@ Box is an Android app for running AI entirely on-device — chat, voice mode, im
 
 **What makes Box unique?** You can sit at your desk, tap two buttons, and have a real flowing voice conversation with an AI — no wake word, no account, no server, no subscription. It listens, thinks, and speaks back sentence by sentence before it's even finished generating. Point the camera at something and ask about it out loud. The AI sees it and answers. All of it runs on the phone in your hand, completely offline, faster than you'd expect. 
 
- Please expect broken features if you are using a custom ROM and 
-running the current release. A separate APK/branch will be made 
-available for users on third-party Android operating systems, including 
-but not limited to LineageOS, GrapheneOS, and CalyxOS.
+**Please expect broken features if 
+you are using a custom ROM and running the current release. A separate 
+APK/branch will be made available for users on third-party Android 
+operating systems, including but not limited to LineageOS, GrapheneOS, 
+and CalyxOS.
+Note:
+ The primary reason for this is that these third-party operating systems
+ typically lack AICore and system-level Text-to-Speech (TTS) components.
+ As a result, features such as voice-to-voice mode and NPU/GPU 
+acceleration are unavailable or significantly impaired on these ROMs.**
+
 ---
 
 ## Screenshots
