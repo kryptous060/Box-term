@@ -190,7 +190,7 @@ Enable an optional biometric lock from Settings. The app re-locks automatically 
 All conversations are stored in a SQLCipher-encrypted Room database. History persists across sessions and is resumable from the Chat History screen. Swipe to delete individual conversations, or wipe all at once.
 
 ### NPU / TPU Acceleration
-All Qualcomm Hexagon NPU variants (Snapdragon 8 Gen 2 / 8 Gen 3 / 8 Elite / newer), Google Tensor TPU (Pixel 8–10), and MediaTek NPU are bundled in a single APK — no separate builds per device. Select **NPU** in the model's accelerator dropdown; Box auto-detects the chip and loads the right runtime. Uses LiteRT JIT compilation on-device, so no pre-compiled model files are needed.
+All Qualcomm Hexagon NPU variants (Snapdragon 8 Gen 2 / 8 Gen 3 / 8 Elite / newer), Google Tensor TPU (Pixel 8–10), and MediaTek NPU are bundled in a single APK — no separate builds per device. Select **NPU/TPU** in the model's accelerator dropdown; Box auto-detects the chip and loads the right runtime. Uses LiteRT JIT compilation on-device, so no pre-compiled model files are needed.
 
 Supported hardware:
 - **Snapdragon 8 Gen 2** (SM8550, Hexagon V69)
