@@ -282,6 +282,10 @@ Box would not exist without the work of the teams and individuals behind the pro
 
 
 
+Thanks to **aryoda** for consistently reporting valid bugs. Appreciate the reports !
+
+
+
 Thank you to everyone who has opened issues, tested builds, or contributed to any of these projects. On-device AI is a community effort.
 
 ---
