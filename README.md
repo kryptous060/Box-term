@@ -9,6 +9,8 @@
 [![whisper.cpp](https://img.shields.io/badge/whisper.cpp-STT-FFB86C.svg)](https://github.com/ggerganov/whisper.cpp)
 [![Voice Mode](https://img.shields.io/badge/Voice%20Mode-Speech--to--Speech-50FA7B.svg)]()
 [![LiteRT](https://img.shields.io/badge/LiteRT-NPU-FF79C6.svg)](https://ai.google.dev/edge/litert)
+[![Document Analysis](https://img.shields.io/badge/Document_Analysis-PDF_%2B_TXT-50FA7B.svg)]()
+[![Vision](https://img.shields.io/badge/Vision-Multimodal_LLM-50FA7B.svg?logo=camera&logoColor=white)]()
 [![Snapdragon NPU](https://img.shields.io/badge/Snapdragon-NPU%208Gen2%2F3%2FElite-FF79C6.svg)](https://www.qualcomm.com/products/mobile/snapdragon)
 [![Google Tensor](https://img.shields.io/badge/Google%20Tensor-TPU%20G3%2FG4%2FG5%20(Pixel%208--10)-FF79C6.svg)](https://store.google.com/gb/category/phones)
 [![MediaTek](https://img.shields.io/badge/MediaTek-NPU-FF79C6.svg)](https://www.mediatek.com/)
@@ -19,6 +21,7 @@
 [![Hybrid Engine](https://img.shields.io/badge/Engine-LiteRT%20%2B%20llama.cpp-BD93F9.svg)]()
 [![Fork](https://img.shields.io/badge/Fork-Google%20AI%20Edge-6272A4.svg)](https://github.com/google-ai-edge/gallery)
 [![Version](https://img.shields.io/badge/Version-1.0.3-BD93F9.svg)](https://github.com/jegly/Box/releases)
+
 
 **A security-hardened fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) — with on-device image generation, voice mode (speech-to-speech AI chat), voice input, document analysis, vision AI, biometric lock, encrypted chat history, llama.cpp support, and GGUF model import.**
 
