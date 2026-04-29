@@ -294,10 +294,8 @@ Thank you to everyone who has opened issues, tested builds, or contributed to an
 ---
 
 ## License
-
+<img src="https://github.com/jegly/Box/blob/main/images/Apache_Software_Foundation.png?raw=true" alt="Apache Software Foundation Logo" width="120">
 Licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for details.
-
-<a href="https://www.buymeacoffee.com/jegly"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-green.png" alt="Buy Me A Coffee" height="41" width="174"></a> 
 
 ---
 
