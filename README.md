@@ -24,6 +24,8 @@
 
 
 **A security-hardened fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) — with on-device image generation, voice mode (speech-to-speech AI chat), voice input, document analysis, vision AI, biometric lock, encrypted chat history, llama.cpp support, and GGUF model import.**
+If this project helped you, please ⭐️ star it to help others find it 
+
 
 ## Disclaimer
 
