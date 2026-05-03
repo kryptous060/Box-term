@@ -321,7 +321,7 @@ Box would not exist without the work of the teams and individuals behind the pro
 
 **[LiteRT / TensorFlow Lite](https://ai.google.dev/edge/litert)** — the Google teams behind LiteRT (formerly TFLite) and the NPU/GPU delegate infrastructure.
 
-
+**[off-grid-mobile-ai](https://github.com/alichherawalla/off-grid-mobile-ai)** — alichherawalla for the on-device Stable Diffusion Android implementation, which helped Box’s image generation pipeline.
 
 Thanks to **aryoda** for consistently reporting valid bugs. Appreciate the reports !
 
