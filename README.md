@@ -2,7 +2,7 @@
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-90.4%25-6272A4.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Android](https://img.shields.io/badge/Android-15%2B-50FA7B.svg?logo=android&logoColor=white)](https://developer.android.com)
-[![Version](https://img.shields.io/badge/UpstreamVersion-1.0.12-BD93F9.svg)](https://github.com/jegly/Box/releases)
+[![Version](https://img.shields.io/badge/UpstreamVersion-1.0.13-BD93F9.svg)](https://github.com/jegly/Box/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-8BE9FD.svg)](LICENSE)
 [![llama.cpp](https://img.shields.io/badge/llama.cpp-GGUF-FFB86C.svg)](https://github.com/ggerganov/llama.cpp)
 [![stable-diffusion.cpp](https://img.shields.io/badge/stable--diffusion.cpp-GGUF-FFB86C.svg)](https://github.com/leejet/stable-diffusion.cpp)
@@ -20,17 +20,17 @@
 [![GGUF Import](https://img.shields.io/badge/GGUF-Import-50FA7B.svg)]()
 [![Hybrid Engine](https://img.shields.io/badge/Engine-LiteRT%20%2B%20llama.cpp-BD93F9.svg)]()
 [![Fork](https://img.shields.io/badge/Fork-Google%20AI%20Edge-6272A4.svg)](https://github.com/google-ai-edge/gallery)
-[![Version](https://img.shields.io/badge/Version-1.0.4-BD93F9.svg)](https://github.com/jegly/Box/releases)
+[![Version](https://img.shields.io/badge/Version-1.0.5-BD93F9.svg)](https://github.com/jegly/Box/releases)
 ![GitHub all releases](https://img.shields.io/github/downloads/jegly/Box/total)
 
 
 If this project helped you, please ⭐️ star it to help others find it 
 ## 📱 Download
 
-[![Download Box 1.0.4 APK](https://img.shields.io/badge/Download-Latest_APK-brightgreen?style=for-the-badge&logo=android)](https://github.com/jegly/Box/releases/tag/v1.0.4)
+[![Download Box 1.0.5 APK](https://img.shields.io/badge/Download-Latest_APK-brightgreen?style=for-the-badge&logo=android)](https://github.com/jegly/Box/releases/latest)
 
 
-> **Note:** If you're using a custom ROM (LineageOS, GrapheneOS, CalyxOS), please use the [custom-rom-support-v1.0.4 release](https://github.com/jegly/Box/releases/tag/custom-rom-support-v1.0.4) instead.
+> **Note:** If you're using a custom ROM (LineageOS, GrapheneOS, CalyxOS), download the `custom-rom-support` APK from the [latest release](https://github.com/jegly/Box/releases/latest) instead.
 
 ## Installation via Obtainium                                                                                                                                                                                                               
                                                                                                                                                                                                                                               
@@ -56,9 +56,10 @@ If this project helped you, please ⭐️ star it to help others find it
   3. Tap **Add** — Obtainium will find the latest release and install it                                                                                                                                                                      
   4. Future updates will be detected automatically
                                                                                                                                                                                                                                               
-  > **Note:** The version number shown inside the app (1.0.12) reflects the
+  > **Note:** The version number shown inside the app (1.0.13) reflects the
   > upstream Google AI Edge Gallery build number and is unrelated to the Box
-  > release version. Box releases are tracked via GitHub tags (v1.0.4 etc).   
+  > release version. Box releases are tracked via GitHub tags (v1.0.5 etc).
+  > Use **Settings → Check for updates** to see if a newer Box release is available.
 
 **Box is a security-hardened fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) — with on-device image generation, voice mode (speech-to-speech AI chat), voice input, document analysis, vision AI, biometric lock, encrypted chat history, llama.cpp support, and GGUF model import.**
 
@@ -67,6 +68,36 @@ If this project helped you, please ⭐️ star it to help others find it
 
 Box is an independent community fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) and is not affiliated with or endorsed by Google LLC. Google branding has been replaced throughout. All credit for the underlying platform goes to Google and the original contributors — this fork simply builds on top of their work.
 
+
+## What's new in v1.0.5
+
+| Feature | Details |
+|---|---|
+| **Gemma 4 E2B & E4B updated** | Model files refreshed on HuggingFace — new commit hashes, smaller sizes, same multimodal capabilities |
+| **Speculative decoding / MTP** | Multi-Token Prediction now working correctly — capability is read from the model file itself, not the allowlist. Gemma 4 E2B gets 66–91 tok/s on Galaxy S26 Ultra (GPU + spec) vs 52 tok/s plain GPU |
+| **Sustained Performance Mode** | `setSustainedPerformanceMode(true)` locks clocks during inference — no more mid-conversation thermal throttling on long generations |
+| **Benchmark spec decoding toggle** | Benchmark screen now shows a speculative decoding toggle for models that support it, so you can measure the real difference |
+| **AI Chat app shortcut** | Long-press the Box icon → AI Chat jumps straight into chat, even from a cold start |
+| **In-app update checker** | Settings → Check for updates — fetches the latest GitHub release and offers a direct download link for your variant (Main or custom-rom-support) |
+| **Model import from list** | Whisper and TTS models can now be imported directly from the model list, without needing a model already downloaded |
+
+---
+
+## Supported LiteRT Models
+
+These are the five models bundled in the Box allowlist. All download directly inside the app.
+
+| Model | Size | Min RAM | Capabilities |
+|---|---|---|---|
+| **Gemma 4 E2B** | 2.4 GB | 8 GB | Chat, vision, audio, thinking, speculative decoding |
+| **Gemma 4 E4B** | 3.4 GB | 12 GB | Chat, vision, audio, thinking, speculative decoding |
+| **Qwen2.5 1.5B** | 1.5 GB | 4 GB | Chat |
+| **DeepSeek-R1-Distill Qwen 1.5B** | 1.7 GB | 4 GB | Chat, thinking |
+| **MobileActions 270M** | 275 MB | 4 GB | Mobile Actions (function calling) |
+
+> Gemma 4 E2B is the recommended daily driver — runs on a Pixel 6a (6 GB RAM), supports all modalities, and reaches the highest tokens/sec with GPU + speculative decoding.
+
+---
 
 ## Related
 
@@ -137,7 +168,7 @@ Box is a fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gall
 | Inference engines | llama.cpp (GGUF LLMs), stable-diffusion.cpp (image gen), whisper.cpp (STT) alongside LiteRT |
 | Model import | Import any local GGUF file — not limited to the curated download list |
 | NPU / TPU | All Snapdragon / Tensor / MediaTek variants bundled in one APK (upstream ships per-SoC) |
-| Voice mode / Vision mode| Free talk (continuous hands-free loop) and Vision talk (live camera + voice) |
+| Voice mode / Vision mode | Free talk (continuous hands-free loop) and Vision talk (live camera + voice) |
 | Image generation | On-device Stable Diffusion via GGUF |
 | Speech-to-text | On-device Whisper STT |
 | Document analysis | Attach text files directly in chat |
@@ -145,6 +176,8 @@ Box is a fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gall
 | Security | Biometric app lock, hard offline mode, prompt sanitisation, audit log |
 | Agent skills | 20 built-in skills (upstream has 9) |
 | Math rendering | LaTeX expressions rendered as Unicode in chat |
+| App shortcut | Long-press icon → AI Chat for instant cold-start navigation |
+| In-app updates | Settings → Check for updates — compares against latest GitHub release, downloads correct variant |
 
 ---
 
