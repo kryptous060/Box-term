@@ -107,7 +107,12 @@ This project (`Box`) forks Google's AI Edge Gallery to create a **hybrid LiteRT 
 
 ---
 
-## What is Box?
+## What is Box?  
+<p align="center">                                                                                                                             
+    <img src="https://raw.githubusercontent.com/jegly/Box/main/images/box-spin.gif" width="80"/>
+  </p>                                                                                                                                           
+  
+
 
 Box is an Android app for running AI entirely on-device — chat, voice mode, image generation, speech-to-text, document analysis, and vision, all without a network connection. It inherits the full feature set of the upstream Google AI Edge Gallery and layers on top: encrypted conversations, biometric lock, hard offline mode, and three additional native inference engines (llama.cpp, stable-diffusion.cpp, whisper.cpp) alongside LiteRT.
 
