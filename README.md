@@ -30,18 +30,15 @@ If this project helped you, please ⭐️ star it to help others find it
 
 > **Note:** If you're using a custom ROM (LineageOS, GrapheneOS, CalyxOS), download the `custom-rom-support` APK from the [latest release](https://github.com/jegly/Box/releases/latest) instead.
 
-## Installation via Obtainium                                                                                                                                                                                                               
- ### Install via Obtainium
-
 ### Install via Obtainium
 
-<a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.box.gallery%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fjegly%2FBox%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22Main%5C%22%2C%5C%22useVersionCodeAsOSVersion%5C%22%3Atrue%7D%22%7D">
-  <img src="https://img.shields.io/badge/Obtainium-Main-brightgreen" alt="Obtainium - Main">
-</a>
+**Main version**  
+[→ Add to Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22:%22com.box.gallery%22,%22url%22:%22https://github.com/jegly/Box%22,%22additionalSettings%22:%22%7B%5C%22apkFilterRegEx%5C%22:%5C%22Main%5C%22,%5C%22useVersionCodeAsOSVersion%5C%22:true%7D%22%7D)
 
-<a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22com.box.gallery%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fjegly%2FBox%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22custom-rom-support%5C%22%2C%5C%22useVersionCodeAsOSVersion%5C%22%3Atrue%7D%22%7D">
-  <img src="https://img.shields.io/badge/Obtainium-Custom%20ROM-brightgreen" alt="Obtainium - Custom ROM">
-</a>
+**Custom ROM version**  
+[→ Add to Obtainium](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22:%22com.box.gallery%22,%22url%22:%22https://github.com/jegly/Box%22,%22additionalSettings%22:%22%7B%5C%22apkFilterRegEx%5C%22:%5C%22custom-rom-support%5C%22,%5C%22useVersionCodeAsOSVersion%5C%22:true%7D%22%7D)
+
+*Recommended for most users: **Main version***
 
          
   ### Which version should I install?                                                                                                                                                                                                         
