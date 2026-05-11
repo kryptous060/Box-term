@@ -127,7 +127,7 @@ This project (`Box`) forks Google's AI Edge Gallery to create a **hybrid LiteRT 
 
 ## What is Box?  
 
-<img src="https://raw.githubusercontent.com/jegly/Box/main/images/Box.png" alt="Box Header" width="1000" />  
+<img src="https://raw.githubusercontent.com/jegly/Box/main/images/box-banner-minimal-1600x320.png" alt="Box Header" width="1000" />  
 
 
 
