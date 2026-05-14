@@ -100,21 +100,7 @@ Box is an independent community fork of [Google AI Edge Gallery](https://github.
 
 ---
 
-## Supported LiteRT Models
 
-These are the five models bundled in the Box allowlist. All download directly inside the app.
-
-| Model | Size | Min RAM | Capabilities |
-|---|---|---|---|
-| **Gemma 4 E2B** | 2.4 GB | 8 GB | Chat, vision, audio, thinking, speculative decoding |
-| **Gemma 4 E4B** | 3.4 GB | 12 GB | Chat, vision, audio, thinking, speculative decoding |
-| **Qwen2.5 1.5B** | 1.5 GB | 4 GB | Chat |
-| **DeepSeek-R1-Distill Qwen 1.5B** | 1.7 GB | 4 GB | Chat, thinking |
-| **MobileActions 270M** | 275 MB | 4 GB | Mobile Actions (function calling) |
-
-> Gemma 4 E2B is the recommended daily driver — runs on a Pixel 6a (6 GB RAM), supports all modalities, and reaches the highest tokens/sec with GPU + speculative decoding.
-
----
 
 ## Related
 
