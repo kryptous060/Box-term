@@ -417,5 +417,5 @@ Licensed under the Apache License, Version 2.0
   | Variant | SHA-256 |
   |---|---|
   | main | `d6406193d0857cc60d99d169738058cb99c40ed84bf4adc82733480bc5ad0f49` |
-  | custom-rom-support | `...` |
+  | custom-rom-support | `160eb2ed07997412ecfb29416fa79d2d6b708ef093544ac54526071e6509c04f` |
 
