@@ -147,7 +147,7 @@ Box is an Android app for running AI entirely on-device — chat, voice mode, im
   <tr>
     <td align="center"><img src="images/Box_Screenshots/Homescreen_overview.png" width="210"/><br/><sub>Home Overview</sub></td>
     <td align="center"><img src="images/Box_Screenshots/AI_Chat_Example.png" width="210"/><br/><sub>AI Chat</sub></td>
-    <td align="center"><img src="images/Box_Screenshots/Ai_Chat_Input_Select.png" width="210"/><br/><sub>Multimodal Input</sub></td>
+    <td align="center"><img src="images/Box_Screenshots/Chat_overview.png" width="210"/><br/><sub>Chat Overview</sub></td>
   </tr>
   <tr>
     <td align="center"><img src="images/Box_Screenshots/Ask_Image.png" width="210"/><br/><sub>Vision AI</sub></td>
@@ -157,30 +157,26 @@ Box is an Android app for running AI entirely on-device — chat, voice mode, im
   <tr>
     <td align="center"><img src="images/Box_Screenshots/Whisper.png" width="210"/><br/><sub>Whisper STT</sub></td>
     <td align="center"><img src="images/Box_Screenshots/LiteRT_backend_Voice.png" width="210"/><br/><sub>LiteRT Voice Backend</sub></td>
-    <td align="center"><img src="images/Box_Screenshots/ImgGen_Overview.png" width="210"/><br/><sub>Image Generation</sub></td>
+    <td align="center"><img src="images/Box_Screenshots/Voice_overview.png" width="210"/><br/><sub>Voice Mode</sub></td>
   </tr>
   <tr>
+    <td align="center"><img src="images/Box_Screenshots/ImgGen_Overview.png" width="210"/><br/><sub>Image Generation</sub></td>
     <td align="center"><img src="images/Box_Screenshots/ImgGen.png" width="210"/><br/><sub>Diffusion Output</sub></td>
+    <td align="center"><img src="images/Box_Screenshots/LocalDiffusion_overview.png" width="210"/><br/><sub>Local Diffusion</sub></td>
+  </tr>
+  <tr>
     <td align="center"><img src="images/Box_Screenshots/IMGGen_Photo_example.png" width="210"/><br/><sub>Photo Generation of a Orange brain cell</sub></td>
     <td align="center"><img src="images/Box_Screenshots/Mobile_Actions_Automation.png" width="210"/><br/><sub>Mobile Actions</sub></td>
+    <td align="center"><img src="images/Box_Screenshots/Agent_Skills.png" width="210"/><br/><sub>Agent Skills</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="images/Box_Screenshots/Agent_Skills.png" width="210"/><br/><sub>Agent Skills</sub></td>
     <td align="center"><img src="images/Box_Screenshots/Prompt_Lab.png" width="210"/><br/><sub>Prompt Lab</sub></td>
     <td align="center"><img src="images/Box_Screenshots/Model_Configuration.png" width="210"/><br/><sub>Model Config</sub></td>
-  </tr>
-  <tr>
     <td align="center"><img src="images/Box_Screenshots/Model_Select.png" width="210"/><br/><sub>Model Select</sub></td>
+  </tr>
+  <tr>
     <td align="center"><img src="images/Box_Screenshots/Settings.png" width="210"/><br/><sub>Settings</sub></td>
-    <td align="center"><img src="images/Box_Screenshots/Chat_overview.png" width="210"/><br/><sub>Chat Overview</sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="images/Box_Screenshots/LocalDiffusion_overview.png" width="210"/><br/><sub>Local Diffusion</sub></td>
     <td align="center"><img src="images/Box_Screenshots/Nano_overview.png" width="210"/><br/><sub>Gemini Nano</sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="images/Box_Screenshots/Voice_overview.png" width="210"/><br/><sub>Voice Mode</sub></td>
-    <td></td>
     <td></td>
   </tr>
 </table>
