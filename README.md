@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/jegly/Box/main/images/box-header05.svg" alt="Box Header" width="1000" />  
+<img src="https://raw.githubusercontent.com/jegly/Box/main/images/box-header08.svg" alt="Box Header" width="1000" />  
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-90.4%25-6272A4.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Android](https://img.shields.io/badge/Android-15%2B-50FA7B.svg?logo=android&logoColor=white)](https://developer.android.com)
@@ -172,6 +172,16 @@ Box is an Android app for running AI entirely on-device — chat, voice mode, im
   <tr>
     <td align="center"><img src="images/Box_Screenshots/Model_Select.png" width="210"/><br/><sub>Model Select</sub></td>
     <td align="center"><img src="images/Box_Screenshots/Settings.png" width="210"/><br/><sub>Settings</sub></td>
+    <td align="center"><img src="images/Box_Screenshots/Chat_overview.png" width="210"/><br/><sub>Chat Overview</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="images/Box_Screenshots/Homescreen_overview.png" width="210"/><br/><sub>Home Overview</sub></td>
+    <td align="center"><img src="images/Box_Screenshots/LocalDiffusion_overview.png" width="210"/><br/><sub>Local Diffusion</sub></td>
+    <td align="center"><img src="images/Box_Screenshots/Nano_overview.png" width="210"/><br/><sub>Gemini Nano</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="images/Box_Screenshots/Voice_overview.png" width="210"/><br/><sub>Voice Mode</sub></td>
+    <td></td>
     <td></td>
   </tr>
 </table>
