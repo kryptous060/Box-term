@@ -19,13 +19,14 @@
 [![Offline](https://img.shields.io/badge/Network-Hard%20Offline-FF5555.svg)]()
 [![GGUF Import](https://img.shields.io/badge/GGUF-Import-50FA7B.svg)]()
 [![Hybrid Engine](https://img.shields.io/badge/Engine-LiteRT%20%2B%20llama.cpp-BD93F9.svg)]()
+[![Gemini Nano](https://img.shields.io/badge/Gemini%20Nano-ML%20Kit%20%C2%B7%20NPU-FF79C6.svg)](https://developers.google.com/ml-kit/language/gemini-nano)
 [![Fork](https://img.shields.io/badge/Fork-Google%20AI%20Edge-6272A4.svg)](https://github.com/google-ai-edge/gallery)
 ![GitHub all releases](https://img.shields.io/github/downloads/jegly/Box/total)                                                                
 
 If this project helped you, please ⭐️ star it to help others find it 
 ## 📱 Download
 
-[![Download Box v1.0.9 APK](https://img.shields.io/badge/Download-Latest_APK-brightgreen?style=for-the-badge&logo=android)](https://github.com/jegly/Box/releases/latest)
+[![Download Box v1.0.10 APK](https://img.shields.io/badge/Download-Latest_APK-brightgreen?style=for-the-badge&logo=android)](https://github.com/jegly/Box/releases/latest)
 
 
 > **Note:** If you're using a custom ROM (LineageOS, GrapheneOS, CalyxOS), download the `custom-rom-support` APK from the [latest release](https://github.com/jegly/Box/releases/latest) instead.
@@ -72,10 +73,21 @@ If this project helped you, please ⭐️ star it to help others find it
 Box is an independent community fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) and is not affiliated with or endorsed by Google LLC. Google branding has been replaced throughout. All credit for the underlying platform goes to Google and the original contributors — this fork simply builds on top of their work.
 
 
-## What's new in v1.0.7 – v1.0.9
+## What's new in v1.0.7 – v1.0.10
 
 | Version | Feature | Details |
 |---|---|---|
+| v1.0.10 | **Gemini Nano hub** | 6 on-device ML Kit features powered by Gemini Nano on Pixel 9+ (via AICore, NPU/TPU-accelerated): Summarize, Proofread, Rewrite, Chat, Describe Image, and Speech-to-Text. First use triggers an automatic background download of Gemini Nano (~1–2 GB via AICore). |
+| v1.0.10 | **Nano Chat — multi-session** | Persistent multi-turn chat with Gemini Nano. Sessions are stored in the existing encrypted SQLCipher database, auto-titled from the first message, and fully resumable. Sessions can be renamed or deleted. Long-press any bubble to copy. |
+| v1.0.10 | **Document attachment in Nano** | Proofread and Rewrite now accept attached documents (PDF, TXT, MD) — content is read and passed to Gemini Nano as context. |
+| v1.0.10 | **Live camera in Describe Image** | Gallery tab + Live Camera tab. Camera tab binds an `ImageCapture` use case — tap Capture to send the current frame to Nano for description. |
+| v1.0.10 | **Background Removal** | New tool powered by ML Kit Subject Segmentation (main branch). One tap removes the background from any photo with a transparency-preserving PNG output. Includes a "Trim transparent edges" toggle. Save or share the result. |
+| v1.0.10 | **Catppuccin + Dracula themes** | Three-way theme picker in Settings: System (Material You) / Catppuccin (14 accents) / Dracula (7 accents). Accent colour persists across restarts with no first-frame flicker. |
+| v1.0.10 | **Tap jacking protection toggle** | New toggle in Settings (on by default) — `filterTouchesWhenObscured` blocks touch events when an overlay is detected, preventing tap-jacking attacks. |
+| v1.0.10 | **Accessibility data sensitivity toggle** | New Settings toggle hides app content from untrusted accessibility services. Off by default (note: incompatible with TalkBack). |
+| v1.0.10 | **LaTeX in table cells** | Inline math inside markdown table cells no longer wraps across multiple lines. Uses Compose `InlineTextContent` to embed math as a single placeholder inside `Text()`. |
+| v1.0.10 | **Import button simplified** | Home screen import button label shortened to just "Import" (removed "GGUF · LiteRT" subtitle). |
+| v1.0.10 | **NPE crash fix** | Fixed a null-pointer crash on startup and on Retry caused by a broken fallback comparator in `groupTasksByCategory`. |
 | v1.0.9 | **Document Q&A** | New RAG pipeline: import PDFs and ask questions grounded in the document. Uses MiniLM embeddings (on-device, LiteRT) for chunk retrieval — model only sees the relevant passages. Every answer cites the source chunks it used. |
 | v1.0.9 | **Model picker in Document Q&A** | Choose which downloaded LLM handles answering — defaults to first available, switchable mid-session. |
 | v1.0.9 | **Kokoro TTS (English)** | Single Kokoro model (`csukuangfj/kokoro-en-v0_19`, ~346 MB) replaces broken individual-voice entries. Correct tensor shapes and metadata — works first time. |
@@ -180,10 +192,13 @@ Box is a fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gall
 | Speech-to-text | On-device Whisper STT |
 | Document analysis | Attach text files (`.txt`, `.md`, `.csv`, `.kt`, etc.) directly in chat |
 | Document Q&A | RAG pipeline: import PDFs, embed with MiniLM on-device, ask questions grounded in document content — answers cite their source passages |
+| Gemini Nano | 6 on-device ML Kit features (Summarize, Proofread, Rewrite, Chat, Describe, Speech) — NPU/TPU-accelerated on Pixel 9+, entirely on-device via AICore (main branch) |
+| Background Removal | ML Kit Subject Segmentation — remove backgrounds from photos, output a transparency-preserving PNG (main branch) |
 | Chat history | Persisted to a SQLCipher-encrypted Room database, resumable across sessions |
-| Security | Biometric app lock, hard offline mode, prompt sanitisation, audit log |
+| Security | Biometric app lock, hard offline mode, prompt sanitisation, audit log, tap jacking protection, accessibility data sensitivity |
+| Themes | Catppuccin (14 accents) and Dracula (7 accents) alongside Material You — three-way picker in Settings |
 | Agent skills | 20 built-in skills (upstream has 9) |
-| Math rendering | LaTeX expressions rendered as Unicode in chat |
+| Math rendering | LaTeX expressions rendered as Unicode in chat, including inside markdown table cells |
 | App shortcut | Long-press icon → AI Chat for instant cold-start navigation |
 | In-app updates | Settings → Check for updates — compares against latest GitHub release, downloads correct variant |
 
@@ -317,7 +332,9 @@ Open `Android/` in Android Studio (Ladybug or newer) and run on a physical devic
 | Biometric gate | `BiometricPrompt` API, re-prompts on each foreground |
 | Offline mode | `OfflineMode` singleton blocks `DownloadWorker` and network calls |
 | Prompt sanitisation | `SecurityUtils.sanitizePrompt()` strips control characters before inference and persistence |
-| Tapjacking protection | `filterTouchesWhenObscured` set on the chat scaffold |
+| Tap jacking protection | `filterTouchesWhenObscured` on the window — user-configurable in Settings (on by default) |
+| Accessibility data sensitivity | `ViewCompat.setAccessibilityDataSensitive()` hides content from untrusted accessibility services — user-configurable in Settings |
+| Screenshot protection | `FLAG_SECURE` blocks screen capture and Recent Apps thumbnails — user-configurable in Settings |
 | Audit log | `SecurityAuditLog` writes security events to a local append-only log |
 
 ---
