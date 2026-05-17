@@ -140,6 +140,7 @@ Box is an Android app for running AI entirely on-device — chat, voice mode, im
 ---
 
 ## Screenshots
+<div align="center">
 
 <table>
   <tr>
@@ -155,30 +156,21 @@ Box is an Android app for running AI entirely on-device — chat, voice mode, im
   <tr>
     <td align="center"><img src="images/Box_Screenshots/Whisper.png" width="230"/><br/><sub>Whisper STT</sub></td>
     <td align="center"><img src="images/Box_Screenshots/Voice_overview.png" width="230"/><br/><sub>Voice Mode</sub></td>
-  </tr>
-  <tr>
     <td align="center"><img src="images/Box_Screenshots/ImgGen_Overview.png" width="230"/><br/><sub>Image Generation</sub></td>
-    <td align="center"><img src="images/Box_Screenshots/ImgGen.png" width="230"/><br/><sub>Diffusion Output</sub></td>
-    <td align="center"><img src="images/Box_Screenshots/LocalDiffusion_overview.png" width="230"/><br/><sub>Local Diffusion</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="images/Box_Screenshots/IMGGen_Photo_example.png" width="230"/><br/><sub>Photo Generation of a Orange brain cell</sub></td>
-    <td align="center"><img src="images/Box_Screenshots/Mobile_Actions_Automation.png" width="230"/><br/><sub>Mobile Actions</sub></td>
     <td align="center"><img src="images/Box_Screenshots/Agent_Skills.png" width="230"/><br/><sub>Agent Skills</sub></td>
-  </tr>
-  <tr>
     <td align="center"><img src="images/Box_Screenshots/Prompt_Lab.png" width="230"/><br/><sub>Prompt Lab</sub></td>
     <td align="center"><img src="images/Box_Screenshots/Model_Configuration.png" width="230"/><br/><sub>Model Config</sub></td>
-    <td align="center"><img src="images/Box_Screenshots/Model_Select.png" width="230"/><br/><sub>Model Select</sub></td>
   </tr>
   <tr>
-    <td colspan="3" align="center">
-      <img src="images/Box_Screenshots/Settings.png" width="230"/>&nbsp;&nbsp;&nbsp;&nbsp;
-      <img src="images/Box_Screenshots/Nano_overview.png" width="230"/><br/>
-      <sub>Settings</sub>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<sub>Gemini Nano</sub>
-    </td>
+    <td align="center"><img src="images/Box_Screenshots/Model_Select.png" width="230"/><br/><sub>Model Select</sub></td>
+    <td align="center"><img src="images/Box_Screenshots/Settings.png" width="230"/><br/><sub>Settings</sub></td>
+    <td align="center"><img src="images/Box_Screenshots/Nano_overview.png" width="230"/><br/><sub>Gemini Nano</sub></td>
   </tr>
 </table>
+
+</div>
 
 ---
 > [!NOTE]
