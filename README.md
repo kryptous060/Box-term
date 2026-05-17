@@ -42,7 +42,8 @@ If this project helped you, please ⭐️ star it to help others find it
 
 *Recommended for most users: **Main version***
 
-         
+
+      
   ### Which version should I install?                                                                                                                                                                                                         
                   
   | Version | For |
@@ -72,7 +73,9 @@ If this project helped you, please ⭐️ star it to help others find it
 
 Box is an independent community fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) and is not affiliated with or endorsed by Google LLC. Google branding has been replaced throughout. All credit for the underlying platform goes to Google and the original contributors — this fork simply builds on top of their work.
 
-
+  
+  
+  
 ## What's new in v1.0.7 – v1.0.10   - MCP is coming in v1.0.11 !
 
 | Version | Feature | Details |
@@ -184,8 +187,8 @@ Box is an Android app for running AI entirely on-device — chat, voice mode, im
 </table>
 
 ---
-
-## What Box adds on top of upstream
+> [!NOTE]
+>## What Box adds on top of upstream
 
 Box is a fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery). The upstream project is excellent — Box just layers on additional capabilities:
 
