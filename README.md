@@ -1,4 +1,6 @@
-<img src="https://raw.githubusercontent.com/jegly/Box/main/images/box_01.png" alt="Box Header" width="780" />  
+<p align="center">
+  <img src="https://raw.githubusercontent.com/jegly/Box/main/images/box_01.png" alt="Box Header" width="100%" height="500" />
+</p>
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-90.4%25-6272A4.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Android](https://img.shields.io/badge/Android-16%2B-50FA7B.svg?logo=android&logoColor=white)](https://developer.android.com)
