@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jegly/Box/main/images/box-banner-v3.svg" alt="Box Header" width="80%" />
+  <img src="https://raw.githubusercontent.com/jegly/Box/main/images/box-banner-v3.svg" alt="Box Header" width="81%" />
 </p>
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-90.4%25-6272A4.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
@@ -118,10 +118,13 @@ Box is an independent community fork of [Google AI Edge Gallery](https://github.
 ---
 
 
+---
 
-## Related
+**Related** 
+ 
 
-Built [OfflineLLM](https://github.com/jegly/OfflineLLM) first — a privacy-first Android chat app.
+Built [OfflineLLM](https://github.com/jegly/OfflineLLM) first — a privacy-first Android chat app with a pure llama.cpp backend.
+
 ---
 
 ## What is Box?  
