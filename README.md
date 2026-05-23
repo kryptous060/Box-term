@@ -2,6 +2,7 @@
   <img src="https://raw.githubusercontent.com/jegly/Box/main/images/banner-box002.svg" alt="Box Header" width="81%" />
 </p>
 
+[![RAG](https://img.shields.io/badge/RAG-Retrieval%20Augmented-CBA6F7.svg)](https://en.wikipedia.org/wiki/Retrieval-augmented_generation)
 [![MCP Servers](https://img.shields.io/badge/MCP_Servers-CBA6F7.svg?logo=anthropic&logoColor=white)](https://modelcontextprotocol.io)
 [![Kotlin](https://img.shields.io/badge/Kotlin-90.4%25-6272A4.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Android](https://img.shields.io/badge/Android-16%2B-50FA7B.svg?logo=android&logoColor=white)](https://developer.android.com)
