@@ -418,7 +418,7 @@ Licensed under the Apache License, Version 2.0
 ---
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jegly/Box/main/images/box-linux-catppuccin-latte.svg" alt="Box for Linux" width="81%" />
+  <img src="https://raw.githubusercontent.com/jegly/Box/main/images/box-linux-catppuccin-latte.svg" alt="Box for Linux" width="90%" />
 </p>
 
 [![Python](https://img.shields.io/badge/Python-3.12%2B-BD93F9.svg?logo=python&logoColor=white)](https://www.python.org)
