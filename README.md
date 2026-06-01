@@ -400,7 +400,7 @@ Box would not exist without the work of the teams and individuals behind the pro
 
 **[Sherpa-ONNX / k2-fsa](https://github.com/k2-fsa/sherpa-onnx)** — the k2-fsa team for Sherpa-ONNX, which powers the Piper TTS engine (Amy and other voices) in the custom-rom-support branch.
 
-**[off-grid-mobile-ai](https://github.com/alichherawalla/off-grid-mobile-ai)** — Mohammed Ali Chherawalla for the on-device Stable Diffusion Android implementation, which was instrumental in getting efficient on-device image generation working and influenced parts of Box’s pipeline.
+**[off-grid-mobile-ai](https://github.com/alichherawalla/off-grid-mobile-ai)** — Mohammed Ali Chherawalla for the on-device Stable Diffusion Android implementation, which was instrumental in getting efficient on-device image generation working and influenced parts of Box’s ImgGen pipeline.
 
  **[PocketSage](https://github.com/umerarif11/pocketsage)** — Umer Arif for the clean, fully offline RAG-on-Android
   reference implementation that the Document Q&A feature in Box is based on.
