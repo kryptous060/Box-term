@@ -15,6 +15,9 @@
 [![LiteRT](https://img.shields.io/badge/LiteRT-NPU-FF79C6.svg)](https://ai.google.dev/edge/litert)
 [![Document Analysis](https://img.shields.io/badge/Document_Analysis-PDF_%2B_TXT-50FA7B.svg)]()
 [![Vision](https://img.shields.io/badge/Vision-Multimodal_LLM-50FA7B.svg?logo=camera&logoColor=white)]()
+[![Super-Resolution](https://img.shields.io/badge/Super--Resolution-Image%20Upscaling-50FA7B.svg)]()
+[![SenseVoice](https://img.shields.io/badge/SenseVoice-Multilingual%20STT-FF79C6.svg)](https://github.com/FunAudioLLM/SenseVoice)
+[![Supertonic](https://img.shields.io/badge/Supertonic-On--Device%20TTS-FF79C6.svg)](https://github.com/supertone-inc/supertonic)
 [![Snapdragon NPU](https://img.shields.io/badge/Snapdragon-NPU%208Gen2%2F3%2FElite-FF79C6.svg)](https://www.qualcomm.com/products/mobile/snapdragon)
 [![Google Tensor](https://img.shields.io/badge/Google%20Tensor-TPU%20G3%2FG4%2FG5%20(Pixel%208--10)-FF79C6.svg)](https://store.google.com/gb/category/phones)
 [![MediaTek](https://img.shields.io/badge/MediaTek-NPU-FF79C6.svg)](https://www.mediatek.com/)
@@ -30,7 +33,7 @@
 If this project helped you, please ⭐️ star it to help others find it. 
 ##  Download
 
-[![Download Box v1.0.11 APK](https://img.shields.io/badge/Download-Latest_APK-A6E3A1?style=for-the-badge&logo=android&logoColor=1E1E2E)](https://github.com/jegly/Box/releases/latest)
+[![Download Box v1.0.12 APK](https://img.shields.io/badge/Download-Latest_APK-A6E3A1?style=for-the-badge&logo=android&logoColor=1E1E2E)](https://github.com/jegly/Box/releases/latest)
 
 > **Note:** If you're using a custom ROM (LineageOS, GrapheneOS, CalyxOS), download the `custom-rom-support` APK from the [latest release](https://github.com/jegly/Box/releases/latest) instead.
 
@@ -69,7 +72,7 @@ If this project helped you, please ⭐️ star it to help others find it.
   > release version. Box releases are tracked via GitHub tags (v1.0.11 etc).
   > Use **Settings → Check for updates** to see if a newer Box release is available.
 
-**Box is a security-hardened feature rich fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) — with on-device image generation, voice mode (speech-to-speech AI chat), voice input, document analysis, vision AI, biometric lock, encrypted chat history, llama.cpp support, and GGUF model import and more**
+**Box is a security-hardened feature rich fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) — with on-device image generation, AI image upscaling, voice mode (speech-to-speech AI chat), voice input, multilingual text-to-speech, document analysis, vision AI, biometric lock, encrypted chat history, llama.cpp support, and GGUF model import and more**
 
 > [!IMPORTANT]
 >## Disclaimer
@@ -82,12 +85,25 @@ Box is an independent community fork of [Google AI Edge Gallery](https://github.
 <details>
 <summary>
 
-## Changelog v1.0.7 – v1.0.11
+## Changelog v1.0.7 – v1.0.12
 
 </summary>
 
 | Version | Feature | Details |
 |---|---|---|
+| v1.0.12 | **SenseVoice — multilingual speech-to-text** | New card in the Voice tab. Transcribes Chinese, English, Japanese, Korean and Cantonese fully offline, roughly **5× faster than Whisper** on CPU. Live "listening" preview while you talk, a multi-message transcript log (copy / delete / clear), language picker, punctuation & number formatting, and optional emotion / audio-event tags. (#68) |
+| v1.0.12 | **Supertonic — multilingual text-to-speech** | New card in the Voice tab. Lightweight (~66M param) on-device speech synthesis in English, Korean, Spanish, Portuguese and French, with multiple built-in voices and adjustable speed. Fully offline — text never leaves the device. |
+| v1.0.12 | **AI Image Upscaling (super-resolution)** | New **Upscale** tool in the image tab. Enhance and enlarge any photo **4× on-device** and save it to your gallery. Three models bundled in the app — **XLSR** (fast), **Real-ESRGAN General** (balanced), **Real-ESRGAN x4plus** (quality) — run via LiteRT, no download required. Photos are auto-rotated (EXIF-aware) before upscaling. |
+| v1.0.12 | **Gemini Nano Vision — visual overlays (main)** | Pose detection now draws a **skeleton overlay** and Face Mesh a **468-point mesh** directly on the camera preview and still images (previously text-only). Added copy buttons on every vision result, an adjustable **live refresh rate** (Fast / Balanced / Slow / Power-saver) with a **Freeze/Resume** toggle, **front/rear camera switching** on all modes, and image upload from your gallery. |
+| v1.0.12 | **Models browser organised by type** | The model list is now grouped into **Language models / Speech-to-Text / Text-to-Speech / Image generation / Other** instead of one flat alphabetical list. |
+| v1.0.12 | **New language models** | Added **TinyLlama 1.1B**, **Phi-4-mini**, **TinySwallow 1.5B**, **VibeThinker 1.5B**, and **Qwen3 8B** to the download list. |
+| v1.0.12 | **Markdown & LaTeX rendering overhaul (#42)** | Headers, bullet/numbered lists and **bold** text now render correctly even when mixed with inline math on the same line; bold that spans a math expression no longer shows literal `**`; wide display equations scroll instead of being clipped. |
+| v1.0.12 | **Clearer model guidance + UI cleanup** | Gemma 4 E2B labelled **"Recommended"**, E4B **"Best overall for flagship devices,"** with cleaned-up model descriptions. Removed promotional banners/links from the MCP and Agent screens (sample-prompt chips kept). |
+| v1.0.12 | **Fix #59 — Snapdragon NPU crash** | Vision/audio sub-backends now follow the primary backend on the NPU path, fixing hard crashes on some Snapdragon devices. |
+| v1.0.12 | **Fix #61 — leftover model files** | Orphaned model-version directories are cleaned up after app updates. |
+| v1.0.12 | **Fix #65 — GrapheneOS speech hang** | Restored the `SpeechRecognizer` availability gate (custom-rom-support build). |
+| v1.0.12 | **Fix — config dialog crash** | Opening the model settings dialog on small-context-window (&lt;2000) models no longer crashes. |
+| v1.0.12 | **Android SDK 37 + deeplink fix** | Updated compile/target SDK to 37 and fixed the notification tap deep link. |
 | v1.0.11 | **MCP server support** | The Agent tab can now connect to external Model Context Protocol servers (e.g. `gitmcp.io/<owner>/<repo>`) and give the model access to remote tools. Off by default — enable in Settings, add a server URL, accept the disclaimer. Every tool call fires a per-call permission dialog (Allow once / Always allow / Deny). Hard Offline Mode disables MCP. |
 | v1.0.11 | **"Agent Skills" renamed to "Agent"** | Reflects the addition of MCP tools alongside the existing 20 built-in skills. Internal IDs unchanged. |
 | v1.0.11 | **Broader NPU init crash recovery (main)** | Snapdragon 8 Elite / Vivo OriginOS users (e.g. iQOO 13) reporting hard crashes on NPU model open now fall back silently to GPU instead. Any catchable NPU init exception is recovered, not just `TF_LITE_AUX`. |
@@ -152,7 +168,7 @@ Built [OfflineLLM](https://github.com/jegly/OfflineLLM) first — a privacy-firs
 
 
 
-Box is an Android app for running AI entirely on-device — chat, voice mode, image generation, speech-to-text, document analysis, and vision, all without a network connection. It inherits the full feature set of the upstream Google AI Edge Gallery and layers on top: encrypted conversations, biometric lock, hard offline mode, and three additional native inference engines (llama.cpp, stable-diffusion.cpp, whisper.cpp) alongside LiteRT.
+Box is an Android app for running AI entirely on-device — chat, voice mode, image generation, image upscaling, speech-to-text, text-to-speech, document analysis, and vision, all without a network connection. It inherits the full feature set of the upstream Google AI Edge Gallery and layers on top: encrypted conversations, biometric lock, hard offline mode, and three additional native inference engines (llama.cpp, stable-diffusion.cpp, whisper.cpp) alongside LiteRT.
 
 # Box: On-Device AI. No Cloud. No Compromise.
 
@@ -217,10 +233,12 @@ Box is a fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gall
 | NPU / TPU | All Snapdragon / Tensor / MediaTek variants bundled in one APK (upstream ships per-SoC) |
 | Voice mode / Vision mode | Free talk (continuous hands-free loop) and Vision talk (live camera + voice) |
 | Image generation | On-device Stable Diffusion via GGUF |
-| Speech-to-text | On-device Whisper STT |
+| Image upscaling | AI super-resolution — enlarge any photo 4× on-device (XLSR / Real-ESRGAN via LiteRT), models bundled, fully offline |
+| Speech-to-text | On-device Whisper STT, plus **SenseVoice** for fast multilingual transcription (Chinese / English / Japanese / Korean / Cantonese, ~5× faster than Whisper) |
+| Text-to-speech | **Supertonic** multilingual on-device TTS (5 languages, multiple voices) alongside Piper / Kokoro |
 | Document analysis | Attach text files (`.txt`, `.md`, `.csv`, `.kt`, etc.) directly in chat |
 | Document Q&A | RAG pipeline: import PDFs, embed with MiniLM on-device, ask questions grounded in document content — answers cite their source passages |
-| Gemini Nano | 6 on-device ML Kit features (Summarize, Proofread, Rewrite, Chat, Describe, Speech) — NPU/TPU-accelerated on Pixel 9+, entirely on-device via AICore (main branch) |
+| Gemini Nano | 6 on-device ML Kit features (Summarize, Proofread, Rewrite, Chat, Describe, Speech) — NPU/TPU-accelerated on Pixel 9+, entirely on-device via AICore (main branch). Vision modes add live camera + still-image analysis with visual overlays (pose skeleton, 468-point face mesh) |
 | Background Removal | ML Kit Subject Segmentation — remove backgrounds from photos, output a transparency-preserving PNG (main branch) |
 | Chat history | Persisted to a SQLCipher-encrypted Room database, resumable across sessions |
 | Security | Biometric app lock, hard offline mode, prompt sanitisation, audit log, tap jacking protection, accessibility data sensitivity |
@@ -247,8 +265,14 @@ With **Gemma 4 E2B / E4B** selected, the chat input expands to a full multimodal
 ### Local Diffusion
 On-device image generation powered by [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp). Runs Stable Diffusion 1.5 in GGUF format fully offline — no API key, no cloud. Configurable steps, CFG scale, seed, and image size presets. Save generated images directly to your gallery. Import your own GGUF diffusion models.
 
+### Image Upscaling (Super-Resolution)
+Enhance and enlarge any photo **4× on-device** with AI super-resolution. Pick an image, upscale it, and save the result to your gallery — fully offline, nothing leaves the device. Choose between **XLSR** (fastest, tiny), **Real-ESRGAN General** (balanced), and **Real-ESRGAN x4plus** (highest quality). All three models are bundled in the app and run via LiteRT, so there's nothing to download. Photos are auto-rotated (EXIF-aware) before upscaling.
+
 ### Voice Input
-On-device speech-to-text using [whisper.cpp](https://github.com/ggerganov/whisper.cpp). Tap to record, tap to transcribe. Copy or clear results. Supports Whisper Tiny through Small models in multiple languages. Audio never leaves the device.
+On-device speech-to-text using [whisper.cpp](https://github.com/ggerganov/whisper.cpp) or **SenseVoice** ([Sherpa-ONNX](https://github.com/k2-fsa/sherpa-onnx)). Tap to record, tap to transcribe. Copy or clear results. Whisper supports Tiny through Large-v3 in multiple languages; **SenseVoice** adds fast multilingual transcription (Chinese / English / Japanese / Korean / Cantonese, ~5× faster than Whisper) with a live preview, a multi-message log, and optional emotion/event tags. Audio never leaves the device.
+
+### Text-to-Speech
+On-device speech synthesis straight from text. **Supertonic** offers lightweight multilingual TTS (English / Korean / Spanish / Portuguese / French) with multiple built-in voices and adjustable speed, alongside Piper and Kokoro voices. Fully offline — text never leaves the device.
 
 ### Free Talk — Real-Time Voice Conversation
 
@@ -374,12 +398,13 @@ Open `Android/` in Android Studio and run on a physical device for best performa
 - **Hilt** — dependency injection
 - **Room + SQLCipher** — encrypted persistence
 - **LiteRT-LM** — LiteRT inference runtime for LLMs (GPU + NPU/TPU)
+- **LiteRT (CompiledModel)** — runs the bundled Qualcomm `.tflite` super-resolution models (image upscaling)
 - **Qualcomm QNN / QAIRT 2.41** — Hexagon NPU runtime (V69–V81, bundled)
 - **LiteRT NPU dispatch** — auto-selects Qualcomm / Google Tensor / MediaTek at runtime
 - **llama.cpp** — GGUF LLM inference (git submodule)
 - **stable-diffusion.cpp** — GGUF image generation (git submodule)
 - **whisper.cpp** — on-device speech-to-text (git submodule)
-- **Sherpa-ONNX (k2-fsa)** — Piper TTS engine for on-device voice synthesis (custom-rom-support branch)
+- **Sherpa-ONNX (k2-fsa)** — on-device speech engine: SenseVoice STT and Supertonic / Piper / Kokoro TTS (both branches)
 
 
 ---
@@ -399,6 +424,10 @@ Box would not exist without the work of the teams and individuals behind the pro
 **[LiteRT / TensorFlow Lite](https://ai.google.dev/edge/litert)** — the Google teams behind LiteRT (formerly TFLite) and the NPU/GPU delegate infrastructure.
 
 **[Sherpa-ONNX / k2-fsa](https://github.com/k2-fsa/sherpa-onnx)** — the k2-fsa team for Sherpa-ONNX, which powers the Piper TTS engine (Amy and other voices) in the custom-rom-support branch.
+
+**[SenseVoice (FunAudioLLM)](https://github.com/FunAudioLLM/SenseVoice)** — the FunAudioLLM / Alibaba Speech Lab team for the SenseVoice multilingual speech-to-text models that power Box's fast STT feature (run on-device via Sherpa-ONNX).
+
+**[Supertonic](https://github.com/supertone-inc/supertonic)** — Supertone Inc. for the Supertonic on-device text-to-speech models that power Box's multilingual TTS feature (run on-device via Sherpa-ONNX).
 
 **[off-grid-mobile-ai](https://github.com/alichherawalla/off-grid-mobile-ai)** — Mohammed Ali Chherawalla for the on-device Stable Diffusion Android implementation, which was instrumental in getting efficient on-device image generation working and influenced parts of Box’s ImgGen pipeline.
 
