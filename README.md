@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jegly/Box/main/images/banner-box002.svg" alt="Box Header" width="81%" />
+  <img src="https://raw.githubusercontent.com/jegly/Box/main/images/b01.svg" alt="Box Header" width="81%" />
 </p>
 
 [![RAG](https://img.shields.io/badge/RAG-Retrieval%20Augmented-BD93F9.svg)](https://en.wikipedia.org/wiki/Retrieval-augmented_generation)
