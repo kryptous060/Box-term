@@ -483,7 +483,7 @@ Licensed under the Apache License, Version 2.0
   | Variant | SHA-256 |
   |---|---|
   | main | `sha256:8791d97f654327349337a8120a30bd8e289970f605e29ed2c64c531306027c1d` |
-  | custom-rom-support | `` |
+  | custom-rom-support | `sha256:fc618a9f3ab89b809616c26b44c2bc7b8585bc3ffbccdba81cf525562b8cd7ab` |
 
 ---
 
