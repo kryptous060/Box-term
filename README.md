@@ -482,8 +482,8 @@ Licensed under the Apache License, Version 2.0
 
   | Variant | SHA-256 |
   |---|---|
-  | main | `sha256:534bb1aab4278c7f8defadaa4d047e1d8cba974c3304e926056c7b7646374410` |
-  | custom-rom-support | `sha256:5dc6da298f8ae4c2388fca7b7c640e3045fbe51a9ae5912e8f2317e1afba3e34` |
+  | main | `sha256:8791d97f654327349337a8120a30bd8e289970f605e29ed2c64c531306027c1d` |
+  | custom-rom-support | `` |
 
 ---
 
