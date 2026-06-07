@@ -485,6 +485,16 @@ Licensed under the Apache License, Version 2.0
   | main | `sha256:8791d97f654327349337a8120a30bd8e289970f605e29ed2c64c531306027c1d` |
   | custom-rom-support | `sha256:fc618a9f3ab89b809616c26b44c2bc7b8585bc3ffbccdba81cf525562b8cd7ab` |
 
+  ### Signing certificate
+
+  Both variants are signed with the same key. Use this fingerprint with [Obtainium AppVerifier](https://github.com/ImranR98/Obtainium) to verify the APK was signed by the correct key before installing:
+
+  **Certificate SHA-256:** `8346b1a70d09ff5c9f7d7febc874cf694b6e267032a4eb38e261d538bce7b09c`
+
+  ```bash
+  apksigner verify --print-certs Box_*.apk | grep SHA-256
+  ```
+
 ---
 
 <p align="center">
