@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/jegly/Box/main/images/b01.svg" alt="Box Header" width="100%" />
+  <img src="https://raw.githubusercontent.com/jegly/Box/main/images/b01.svg" alt="Box Header" width="81%" />
 </p>
 
 [![Fork](https://img.shields.io/badge/Fork-Google%20AI%20Edge-6272A4.svg)](https://github.com/google-ai-edge/gallery)
@@ -33,7 +33,7 @@
 If this project helped you, please ⭐️ star it to help others find it. 
 ##  Download
 
-[![Download Box v1.0.12 APK](https://img.shields.io/badge/Download-Latest_APK-A6E3A1?style=for-the-badge&logo=android&logoColor=1E1E2E)](https://github.com/jegly/Box/releases/latest)
+[![Download Box v2.0.0 APK](https://img.shields.io/badge/Download-Latest_APK-A6E3A1?style=for-the-badge&logo=android&logoColor=1E1E2E)](https://github.com/jegly/Box/releases/latest)
 
 > **Note:** If you're using a custom ROM (LineageOS, GrapheneOS, CalyxOS), download the `custom-rom-support` APK from the [latest release](https://github.com/jegly/Box/releases/latest) instead.
 
@@ -67,10 +67,11 @@ If this project helped you, please ⭐️ star it to help others find it.
   3. Tap **Add** — Obtainium will find the latest release and install it                                                                                                                                                                      
   4. Future updates will be detected automatically
                                                                                                                                                                                                                                               
-  > **Note:** The version number shown inside the app (1.0.15) reflects the
-  > upstream Google AI Edge Gallery build number and is unrelated to the Box
-  > release version. Box releases are tracked via GitHub tags (v1.0.11 etc).
-  > Use **Settings → Check for updates** to see if a newer Box release is available.
+  > **Note:** As of **v2.0.0**, the in-app **App version** matches the Box
+  > release version (2.0.0) — the earlier mismatch with the upstream Google AI
+  > Edge Gallery build number (which showed 1.0.15) is fixed (#67). Box releases
+  > are tracked via GitHub tags. Use **Settings → Check for updates** to see if a
+  > newer Box release is available.
 
 **Box is a security-hardened feature rich fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) — with on-device image generation, AI image upscaling, voice mode (speech-to-speech AI chat), voice input, multilingual text-to-speech, document analysis, vision AI, biometric lock, encrypted chat history, llama.cpp support, and GGUF model import and more**
 
@@ -85,12 +86,25 @@ Box is an independent community fork of [Google AI Edge Gallery](https://github.
 <details>
 <summary>
 
-## Changelog v1.0.7 – v1.0.12
+## Changelog v1.0.7 – v2.0.0
 
 </summary>
 
 | Version | Feature | Details |
 |---|---|---|
+| v2.0.0 | **Google Tensor G5 (Pixel 10) acceleration** | Gemma now runs on the Pixel 10's Tensor **G5 TPU**, not just the GPU. Supported models route to the TPU automatically and expose a dedicated **TPU** option in the accelerator picker. |
+| v2.0.0 | **MediaTek NPU support** | Bundled the MediaTek dispatch runtime and added the first models that run on **MediaTek Dimensity** neural engines. |
+| v2.0.0 | **New models** | **Gemma 4 E2B (Tensor G5)** and **Gemma 4 12B** (GPU); **Gemma 3 1B-IT (Tensor G5)**, **Gemma 3n E2B (MediaTek, multimodal)** and **Qwen3 0.6B (MediaTek)** NPU builds; plus **Qwen3 0.6B / 4B / 4B Instruct 2507** (GPU/CPU). Gated Gemma NPU models now download in-app with no token. |
+| v2.0.0 | **Face Recognition — on-device & encrypted** | New tool in the image section: detect, enroll and name people, then recognise them in photos or **live from the camera**, fully offline. Multi-sample enrollment with face alignment, capture-to-add, an on-screen face mesh, and a settings panel (match strictness, front camera, show %, clear all). All face data is encrypted on-device (SQLCipher) and never leaves the phone — opt-in and user-enrolled only. |
+| v2.0.0 | **New Light theme + theme-aware home** | A crisp, wallpaper-independent **Light** theme, and the home background now follows your selected theme (System / Light / Catppuccin / Dracula) instead of always being black. |
+| v2.0.0 | **Gemini Nano Hub on custom-ROM** | The full Gemini Nano hub (Summarize / Proofread / Rewrite / Describe / Chat / Speech) is now included in the **custom-rom-support** build too, degrading gracefully on devices without AICore (ML-Kit vision tools still work). |
+| v2.0.0 | **Nano document-attach crash + leak fixes** | Fixed a crash when attaching a document in Summarize/Proofread/Rewrite (the file picker could be hijacked by the photo picker on Android 14+) — now uses the proper document picker with a clean fallback. Also fixed GenAI service/memory leaks when switching between Nano features. |
+| v2.0.0 | **Copy button on code blocks** | Fenced code blocks in chat now render with a language label and a one-tap **Copy code** button. |
+| v2.0.0 | **SenseVoice in Chat** | The chat mic now works with a loaded SenseVoice model (priority Whisper → SenseVoice → system) instead of dead-ending when no Whisper model is present. |
+| v2.0.0 | **Speculative decoding in chat** | Speculative / Multi-Token-Prediction decoding is available for Gemma 4 in chat (off by default). |
+| v2.0.0 | **Fix #69 — agent mode with text-only models** | Agent mode no longer force-loads vision on models that don't support it, which previously blocked text-only imported models entirely. |
+| v2.0.0 | **Fix #67 — correct installed version** | Aligned `versionName` with the public version, so Obtainium / Android's "App version" report the right number (no more false "update available"). This is why the release jumps to **2.0.0**. |
+| v2.0.0 | **Smaller download** | Native libraries are now compressed inside the APK — the main build drops from 400 MB+ to ~278 MB (they're extracted on install). |
 | v1.0.12 | **SenseVoice — multilingual speech-to-text** | New card in the Voice tab. Transcribes Chinese, English, Japanese, Korean and Cantonese fully offline, roughly **5× faster than Whisper** on CPU. Live "listening" preview while you talk, a multi-message transcript log (copy / delete / clear), language picker, punctuation & number formatting, and optional emotion / audio-event tags. (#68) |
 | v1.0.12 | **Supertonic — multilingual text-to-speech** | New card in the Voice tab. Lightweight (~66M param) on-device speech synthesis in English, Korean, Spanish, Portuguese and French, with multiple built-in voices and adjustable speed. Fully offline — text never leaves the device. |
 | v1.0.12 | **AI Image Upscaling (super-resolution)** | New **Upscale** tool in the image tab. Enhance and enlarge any photo **4× on-device** and save it to your gallery. Three models bundled in the app — **XLSR** (fast), **Real-ESRGAN General** (balanced), **Real-ESRGAN x4plus** (quality) — run via LiteRT, no download required. Photos are auto-rotated (EXIF-aware) before upscaling. |
@@ -238,11 +252,12 @@ Box is a fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gall
 | Text-to-speech | **Supertonic** multilingual on-device TTS (5 languages, multiple voices) alongside Piper / Kokoro |
 | Document analysis | Attach text files (`.txt`, `.md`, `.csv`, `.kt`, etc.) directly in chat |
 | Document Q&A | RAG pipeline: import PDFs, embed with MiniLM on-device, ask questions grounded in document content — answers cite their source passages |
-| Gemini Nano | 6 on-device ML Kit features (Summarize, Proofread, Rewrite, Chat, Describe, Speech) — NPU/TPU-accelerated on Pixel 9+, entirely on-device via AICore (main branch). Vision modes add live camera + still-image analysis with visual overlays (pose skeleton, 468-point face mesh) |
+| Gemini Nano | 6 on-device ML Kit features (Summarize, Proofread, Rewrite, Chat, Describe, Speech) — entirely on-device via AICore on Pixel 9+/10 and recent Samsung / Xiaomi / OnePlus / OPPO / vivo flagships (both branches as of v2.0.0). Vision modes add live camera + still-image analysis with visual overlays (pose skeleton, 468-point face mesh) |
+| Face Recognition | On-device, encrypted face recognition (both branches) — enroll and name people, then recognise them in photos or live from the camera. Multi-sample enrollment with alignment, capture-to-add, face-mesh overlay, SQLCipher-encrypted storage, fully offline and opt-in |
 | Background Removal | ML Kit Subject Segmentation — remove backgrounds from photos, output a transparency-preserving PNG (main branch) |
 | Chat history | Persisted to a SQLCipher-encrypted Room database, resumable across sessions |
 | Security | Biometric app lock, hard offline mode, prompt sanitisation, audit log, tap jacking protection, accessibility data sensitivity |
-| Themes | Catppuccin (14 accents) and Dracula (7 accents) alongside Material You — three-way picker in Settings |
+| Themes | Catppuccin (14 accents), Dracula (7 accents), a bright **Light** theme, and Material You — picker in Settings, with the home screen tinted to match the active theme |
 | Agent (skills + MCP) | 20 built-in skills (upstream has 9) plus Model Context Protocol — connect to remote MCP servers and give the model real tools, with per-call permission prompts |
 | Math rendering | LaTeX expressions rendered as Unicode in chat, including inside markdown table cells |
 | App shortcut | Long-press icon → AI Chat for instant cold-start navigation |
@@ -328,7 +343,7 @@ All conversations are stored in a SQLCipher-encrypted Room database. History per
 ### NPU / TPU Acceleration
 All Qualcomm Hexagon NPU variants (Snapdragon 8 Gen 2 / 8 Gen 3 / 8 Elite / newer), Google Tensor TPU (Pixel 8–10), and MediaTek NPU are bundled in a single APK — no separate builds per device. Select **NPU/TPU** in the model's accelerator dropdown; Box auto-detects the chip and loads the right runtime.
 
-> **Note:** NPU acceleration currently falls back to GPU/CPU for most models. The NPU path (via AICore on Tensor, QNN on Snapdragon) requires model-side AUX metadata that current litert-community models don't yet include. GPU is the recommended accelerator and performs excellently on all supported chips.
+> **Note:** As of v2.0.0, dedicated NPU/TPU model builds run on the neural engine — **Gemma 4 E2B / Gemma 3 1B on the Google Tensor G5 (Pixel 10)** and **Gemma 3n E2B / Qwen3 0.6B on MediaTek Dimensity**. These are SoC-specific compiled `.litertlm` files that download automatically on matching hardware. Generic litert-community GPU models still run on GPU (they don't ship the per-SoC NPU build). GPU remains an excellent default on all supported chips.
 
 Supported hardware:
 - **Snapdragon 888 / 8 Gen 1** (Hexagon V69)
@@ -337,7 +352,7 @@ Supported hardware:
 - **Snapdragon 8 Elite** (SM8750, Hexagon V79)
 - **Snapdragon next-gen** (SM8850, Hexagon V81)
 - **Google Tensor G3 / G4 / G5** (Pixel 8 / 9 / 10)
-- **MediaTek Dimensity** (MT6989, MT6991)
+- **MediaTek Dimensity** (MT6989, MT6991, MT6993)
 
 ### GGUF Model Import
 Import any GGUF model file from local storage. At import time set the display name and choose the accelerator (CPU, GPU via OpenCL/Vulkan, or NPU via QNN delegate). Stable Diffusion GGUF models can also be imported for image generation.
@@ -467,8 +482,8 @@ Licensed under the Apache License, Version 2.0
 
   | Variant | SHA-256 |
   |---|---|
-  | main | `9d38af7fd67e52dca1971f9edd4e769ab743eaca079667bba0740a4b577667e6` |
-  | custom-rom-support | `a21fde92779af3c3b55342df33290c420841d079faaf858d13c892f65dd04b3d` |
+  | main | `` |
+  | custom-rom-support | `` |
 
 ---
 
