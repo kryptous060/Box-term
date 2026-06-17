@@ -33,7 +33,7 @@
 If this project helped you, please ⭐️ star it to help others find it. 
 ##  Download
 
-[![Download Box v3.0.0 APK](https://img.shields.io/badge/Download-Latest_APK-A6E3A1?style=for-the-badge&logo=android&logoColor=1E1E2E)](https://github.com/jegly/Box/releases/latest)
+[![Download Box v3.1.0 APK](https://img.shields.io/badge/Download-Latest_APK-A6E3A1?style=for-the-badge&logo=android&logoColor=1E1E2E)](https://github.com/jegly/Box/releases/latest)
 
 > **Note:** If you're using a custom ROM (LineageOS, GrapheneOS, CalyxOS), download the `custom-rom-support` APK from the [latest release](https://github.com/jegly/Box/releases/latest) instead.
 
@@ -86,12 +86,16 @@ Box is an independent community fork of [Google AI Edge Gallery](https://github.
 <details>
 <summary>
 
-## Changelog v1.0.7 – v3.0.0
+## Changelog v1.0.7 – v3.1.0
 
 </summary>
 
 | Version | Feature | Details |
 |---|---|---|
+| v3.1.0 | **NPU now works on Snapdragon & MediaTek — for the first time** | This is the **first Box build where on-device NPU acceleration actually runs on Snapdragon and MediaTek phones.** Previous builds shipped the NPU models but crashed on load. Box now ships the Qualcomm and MediaTek NPU dispatch libraries rebuilt to match the LiteRT runtime (2.1.5) plus an updated Qualcomm AI stack (**QNN 2.47**), with per-vendor builds so each phone loads the correct driver — **NPU chat and benchmarking now run** on those devices. The Pixel / Tensor G5 path is unchanged. (#81, #83, #88) |
+| v3.1.0 | **Smoother NPU chat on small models** | Long conversations on the **Gemma 3 1B** NPU model no longer abruptly stop or error when the context fills — Box slides the context window so the chat keeps going. Added safeguards so the small NPU model doesn't get stuck repeating itself or return empty replies. *(Snapdragon / MediaTek NPU only — Tensor G5 and GPU/CPU are untouched.)* |
+| v3.1.0 | **Fix — NPU benchmark crash (#81)** | Benchmarking an NPU model no longer crashes. |
+| v3.1.0 | **Polish** | New animated "Initializing model" loading screen; removed the "Experimental" tag from Mobile Actions; tidied up model descriptions. |
 | v3.0.0 | **Major UI overhaul — Material 3 Expressive** | A top-to-bottom interface refresh. The app now moves with spring-physics motion: home cards bounce in and respond to taps, chat messages rise and fade in as they arrive, and screen transitions use Material 3 slide-and-fade. The jump to 3.0.0 reflects how much of the UI changed — the models and engines are unchanged. |
 | v3.0.0 | **11 new themes** | A set of terminal-inspired palettes — Fairy Floss, Nord, Bim, Borland, C64, Cobalt Neon, Grass, Homebrew Ocean, Mono Amber, Mono Red, and Synthwave — selectable from a new dropdown in Settings, alongside the existing System, Light, Catppuccin, and Dracula themes. |
 | v3.0.0 | **Custom app & chat fonts** | Choose from 13 bundled font families (Nunito plus Cormorant Garamond, DotGothic16, IBM Plex Mono / Serif, Instrument Serif, Playfair Display, Press Start 2P, Quicksand, Space Grotesk, Turret Road, Viaoda Libre, and more), each previewed in its own typeface — with an optional separate font just for chat messages. |
@@ -430,7 +434,7 @@ Open `Android/` in Android Studio and run on a physical device for best performa
 - **Room + SQLCipher** — encrypted persistence
 - **LiteRT-LM** — LiteRT inference runtime for LLMs (GPU + NPU/TPU)
 - **LiteRT (CompiledModel)** — runs the bundled Qualcomm `.tflite` super-resolution models (image upscaling)
-- **Qualcomm QNN / QAIRT 2.41** — Hexagon NPU runtime (V69–V81, bundled)
+- **Qualcomm QNN / QAIRT 2.47** — Hexagon NPU runtime (V69–V81, bundled)
 - **LiteRT NPU dispatch** — auto-selects Qualcomm / Google Tensor / MediaTek at runtime
 - **llama.cpp** — GGUF LLM inference (git submodule)
 - **stable-diffusion.cpp** — GGUF image generation (git submodule)
