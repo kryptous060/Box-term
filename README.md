@@ -28,7 +28,8 @@
 [![Supertonic](https://img.shields.io/badge/Supertonic-On--Device%20TTS-FF79C6.svg)](https://github.com/supertone-inc/supertonic)
 [![SQLCipher](https://img.shields.io/badge/SQLCipher-AES--256-F1FA8C.svg?logo=sqlite&logoColor=white)](https://www.zetetic.net/sqlcipher/)
 [![Biometric](https://img.shields.io/badge/Biometric-Lock-FF5555.svg?logo=fingerprint&logoColor=white)]()
-[![Offline](https://img.shields.io/badge/Network-Hard%20Offline-FF5555.svg)]()                                       
+[![Offline](https://img.shields.io/badge/Network-Hard%20Offline-FF5555.svg)]()     
+[![Music  Generation](https://img.shields.io/badge/Music%20Generation-On--Device-50FA7B.svg)]()
 
 If this project helped you, please ⭐️ star it to help others find it. 
 ##  Download
