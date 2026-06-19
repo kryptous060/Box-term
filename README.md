@@ -33,7 +33,7 @@
 If this project helped you, please ⭐️ star it to help others find it. 
 ##  Download
 
-[![Download Box v3.1.0 APK](https://img.shields.io/badge/Download-Latest_APK-A6E3A1?style=for-the-badge&logo=android&logoColor=1E1E2E)](https://github.com/jegly/Box/releases/latest)
+[![Download Box v3.2.0 APK](https://img.shields.io/badge/Download-Latest_APK-A6E3A1?style=for-the-badge&logo=android&logoColor=1E1E2E)](https://github.com/jegly/Box/releases/latest)
 
 > **Note:** If you're using a custom ROM (LineageOS, GrapheneOS, CalyxOS), download the `custom-rom-support` APK from the [latest release](https://github.com/jegly/Box/releases/latest) instead.
 
@@ -86,12 +86,16 @@ Box is an independent community fork of [Google AI Edge Gallery](https://github.
 <details>
 <summary>
 
-## Changelog v1.0.7 – v3.1.0
+## Changelog v1.0.7 – v3.2.0
 
 </summary>
 
 | Version | Feature | Details |
 |---|---|---|
+| v3.2.0 | **🎵 On-device music & sound generation** | Make music and sound effects from a text description — completely offline, nothing leaves your phone. Three tiers under the new **Sound** tab: **SoundGen** (quick clips & sound effects in seconds), **SoundGen HD** (higher-quality audio up to ~24s), and **SoundGen HD Long** (full pieces up to ~3 minutes). Set the length, then **play, save, or share** the result. The generator for each tier downloads on first use, then runs entirely on-device. |
+| v3.2.0 | **Identify — on-device image recognition** | Point Box at a photo and it tells you what's in it — 1000+ everyday objects, animals and scenes. Pick from your gallery or take a new shot. Fully offline, hardware-accelerated on supported devices. |
+| v3.2.0 | **Tabs reorganised — Sound & Core** | Clearer home tabs: **Sound** groups the audio features, **Core** groups chat & assistant. |
+| v3.2.0 | **Chat remembers on reopen** | Reopening a conversation now replays recent context to the model, so it picks up where you left off — new chats still start fresh. |
 | v3.1.0 | **NPU now works on Snapdragon & MediaTek — for the first time** | This is the **first Box build where on-device NPU acceleration actually runs on Snapdragon and MediaTek phones.** Previous builds shipped the NPU models but crashed on load. Box now ships the Qualcomm and MediaTek NPU dispatch libraries rebuilt to match the LiteRT runtime plus an updated Qualcomm AI stack (**QNN 2.47**), with per-vendor builds so each phone loads the correct driver — **NPU chat and benchmarking now run** on those devices. The Pixel / Tensor G5 path is unchanged. (#81, #83, #88) |
 | v3.1.0 | **Smoother NPU chat on small models** | Long conversations on the **Gemma 3 1B** NPU model no longer abruptly stop or error when the context fills — Box slides the context window so the chat keeps going. Added safeguards so the small NPU model doesn't get stuck repeating itself or return empty replies. *(Snapdragon / MediaTek NPU only — Tensor G5 and GPU/CPU are untouched.)* |
 | v3.1.0 | **Fix — NPU benchmark crash (#81)** | Benchmarking an NPU model no longer crashes. |
@@ -267,6 +271,7 @@ Box is a fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gall
 | NPU / TPU | All Snapdragon / Tensor / MediaTek variants bundled in one APK (upstream ships per-SoC) |
 | Voice mode / Vision mode | Free talk (continuous hands-free loop) and Vision talk (live camera + voice) |
 | Image generation | On-device Stable Diffusion via GGUF |
+| Music & sound generation | Generate music and sound effects from a text prompt, fully offline — quick clips, higher-quality audio, or long-form pieces up to ~3 minutes (**Sound** tab) |
 | Image upscaling | AI super-resolution — enlarge any photo 4× on-device (XLSR / Real-ESRGAN via LiteRT), models bundled, fully offline |
 | Speech-to-text | On-device Whisper STT, plus **SenseVoice** for fast multilingual transcription (Chinese / English / Japanese / Korean / Cantonese, ~5× faster than Whisper) |
 | Text-to-speech | **Supertonic** multilingual on-device TTS (5 languages, multiple voices) alongside Piper / Kokoro |
@@ -299,6 +304,9 @@ With **Gemma 4 E2B / E4B** selected, the chat input expands to a full multimodal
 
 ### Local Diffusion
 On-device image generation powered by [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp). Runs Stable Diffusion 1.5 in GGUF format fully offline — no API key, no cloud. Configurable steps, CFG scale, seed, and image size presets. Save generated images directly to your gallery. Import your own GGUF diffusion models.
+
+### Music & Sound Generation
+Generate music and sound effects from a text description — completely on-device, no internet, nothing leaves your phone. Under the **Sound** tab, pick a tier: **SoundGen** for quick clips and sound effects in seconds, **SoundGen HD** for higher-quality audio up to ~24 seconds, and **SoundGen HD Long** for full-length pieces up to ~3 minutes. Describe what you want, set the length, and hit Generate — then play it, save it to your device, or share it. The generator downloads on first use, then runs entirely offline.
 
 ### Image Upscaling (Super-Resolution)
 Enhance and enlarge any photo **4× on-device** with AI super-resolution. Pick an image, upscale it, and save the result to your gallery — fully offline, nothing leaves the device. Choose between **XLSR** (fastest, tiny), **Real-ESRGAN General** (balanced), and **Real-ESRGAN x4plus** (highest quality). All three models are bundled in the app and run via LiteRT, so there's nothing to download. Photos are auto-rotated (EXIF-aware) before upscaling.
