@@ -361,17 +361,17 @@ Enable an optional biometric lock from Settings. The app re-locks automatically 
 All conversations are stored in a SQLCipher-encrypted Room database. History persists across sessions and is resumable from the Chat History screen. Swipe to delete individual conversations, or wipe all at once.
 
 ### NPU / TPU Acceleration
-All Qualcomm Hexagon NPU variants (Snapdragon 8 Gen 2 / 8 Gen 3 / 8 Elite / newer), Google Tensor TPU (Pixel 8–10), and MediaTek NPU are bundled in a single APK — no separate builds per device. Select **NPU/TPU** in the model's accelerator dropdown; Box auto-detects the chip and loads the right runtime.
+All Qualcomm Hexagon NPU variants (Snapdragon 8 Gen 2 / 8 Gen 3 / 8 Elite / newer), Google Tensor TPU (Pixel 10), and MediaTek NPU are bundled in a single APK — no separate builds per device. Select **NPU/TPU** in the model's accelerator dropdown; Box auto-detects the chip and loads the right runtime.
 
-> **Note:** As of v2.0.2, dedicated NPU/TPU model builds run on the neural engine — **Gemma 4 E2B / Gemma 3 1B on the Google Tensor G5 (Pixel 10)**; **Gemma 3 1B & Gemma 3 270M on Snapdragon (SM8550 → SM8850) and MediaTek Dimensity (MT6989–MT6993)**; and **Gemma 3n E2B / Qwen3 0.6B on MediaTek Dimensity**. These are SoC-specific compiled `.litertlm` files that download automatically on matching hardware. The universal **Gemma 3n E2B / E4B** builds (multimodal) run on GPU/CPU everywhere — NPU acceleration for 3n is currently MediaTek-only. Generic litert-community GPU models still run on GPU (they don't ship the per-SoC NPU build). GPU remains an excellent default on all supported chips.
+> **Note:** As of v3.1.0, dedicated NPU/TPU model builds run on the neural engine — **Gemma 4 E2B / Gemma 3 1B on the Google Tensor G5 (Pixel 10)**; **Gemma 3 1B & Gemma 3 270M on Snapdragon (SM8550 → SM8850) and MediaTek Dimensity (MT6989–MT6993)**; and **Gemma 3n E2B / Qwen3 0.6B on MediaTek Dimensity**. These are SoC-specific compiled `.litertlm` files that download automatically on matching hardware. The universal **Gemma 3n E2B / E4B** builds (multimodal) run on GPU/CPU everywhere — NPU acceleration for 3n is currently MediaTek-only. Generic litert-community GPU models still run on GPU (they don't ship the per-SoC NPU build). GPU remains an excellent default on all supported chips.
 
-Supported hardware:
-- **Snapdragon 888 / 8 Gen 1** (Hexagon V69)
+Supported npu accelerated hardware:
+
 - **Snapdragon 8 Gen 2** (SM8550, Hexagon V73)
 - **Snapdragon 8 Gen 3** (SM8650, Hexagon V75)
 - **Snapdragon 8 Elite** (SM8750, Hexagon V79)
 - **Snapdragon next-gen** (SM8850, Hexagon V81)
-- **Google Tensor G3 / G4 / G5** (Pixel 8 / 9 / 10)
+- **Google Tensor G5** (Pixel 10)
 - **MediaTek Dimensity** (MT6989, MT6991, MT6993)
 
 ### GGUF Model Import
