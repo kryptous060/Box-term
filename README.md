@@ -371,7 +371,7 @@ Supported npu accelerated hardware:
 - **Snapdragon 8 Gen 3** (SM8650, Hexagon V75)
 - **Snapdragon 8 Elite** (SM8750, Hexagon V79)
 - **Snapdragon next-gen** (SM8850, Hexagon V81)
-- **Google Tensor G5** (Pixel 10)
+- **Google Tensor G5** 
 - **MediaTek Dimensity** (MT6989, MT6991, MT6993)
 
 ### GGUF Model Import
