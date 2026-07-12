@@ -82,9 +82,8 @@ If this project helped you, please ⭐️ star it to help others find it.
 > [!IMPORTANT]
 >## Disclaimer
 
-Box is an independent community fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) and is not affiliated with or endorsed by Google LLC. Google branding has been replaced throughout. All credit for the underlying platform goes to Google and the original contributors — this fork simply builds on top of their work.
+Box began as a fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) and is not affiliated with or endorsed by Google LLC. Google branding has been replaced throughout. Box has since diverged substantially from upstream — active merging with upstream stopped some time ago, and upstream has itself since adopted features that originated in Box. Box now carries roughly 50+ features not present in upstream Google AI Edge Gallery. Credit for the original underlying platform goes to Google and the original contributors.
 
-  
   
   
 <details>
