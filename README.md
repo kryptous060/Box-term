@@ -76,8 +76,8 @@ If this project helped you, please ⭐️ star it to help others find it.
   > Edge Gallery build number (which showed 1.0.15) is fixed (#67). Box releases
   > are tracked via GitHub tags. Use **Settings → Check for updates** to see if a
   > newer Box release is available.
-
-**Box is a security-hardened feature rich fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) — with on-device image generation, Box Assist (spoken camera assistance for blind and low-vision users), AI image upscaling, voice mode (speech-to-speech AI chat), voice input, multilingual text-to-speech, document analysis, vision AI, biometric lock, encrypted chat history, llama.cpp support, and GGUF model import and more**
+  
+**Box is a security-hardened, feature rich fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) — with on-device image generation (FLUX.2 klein & Z-Image Turbo diffusion), Box Assist (spoken camera assistance for blind and low-vision users), AI image upscaling, face recognition, photo erase/inpainting, music & sound generation, voice mode (speech-to-speech AI chat), voice input, multilingual text-to-speech, document analysis and Q&A, vision AI, full GPU and Snapdragon/Tensor/MediaTek NPU acceleration, a hardened security posture (biometric lock, encrypted chat history, tap-jacking protection), llama.cpp support, and GGUF model import — and more**
 
 > [!IMPORTANT]
 >## Disclaimer
