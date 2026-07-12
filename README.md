@@ -6,7 +6,7 @@
 [![Version](https://img.shields.io/badge/UpstreamVersion-1.0.15-BD93F9.svg)](https://github.com/jegly/Box/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-8BE9FD.svg)](LICENSE)
 ![GitHub all releases](https://img.shields.io/github/downloads/jegly/Box/total)
-[![Android](https://img.shields.io/badge/Android-16%2B-50FA7B.svg?logo=android&logoColor=white)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-14%2B-50FA7B.svg?logo=android&logoColor=white)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-90.4%25-BD93F9.svg?logo=kotlin&logoColor=white)](https://kotlinlang.org)
 [![Hybrid Engine](https://img.shields.io/badge/Engine-LiteRT%20%2B%20llama.cpp-BD93F9.svg)]()
 [![llama.cpp](https://img.shields.io/badge/llama.cpp-GGUF-FFB86C.svg)](https://github.com/ggerganov/llama.cpp)
@@ -30,11 +30,14 @@
 [![Biometric](https://img.shields.io/badge/Biometric-Lock-FF5555.svg?logo=fingerprint&logoColor=white)]()
 [![Offline](https://img.shields.io/badge/Network-Hard%20Offline-FF5555.svg)]()     
 [![MusicGeneration](https://img.shields.io/badge/Music%20Generation-On--Device-50FA7B.svg)]()
+[![Box Assist](https://img.shields.io/badge/Box%20Assist-Spoken%20Camera%20Assistance-50FA7B.svg)]()
+[![Image Generation](https://img.shields.io/badge/FLUX.2%20klein%20%2B%20Z--Image-On--Device%20Diffusion-50FA7B.svg)]()
+[![Vulkan](https://img.shields.io/badge/Vulkan-GGUF%20GPU%20Offload-FFB86C.svg)]()
 
 If this project helped you, please ⭐️ star it to help others find it. 
 ##  Download
 
-[![Download Box v3.2.0 APK](https://img.shields.io/badge/Download-Latest_APK-A6E3A1?style=for-the-badge&logo=android&logoColor=1E1E2E)](https://github.com/jegly/Box/releases/latest)
+[![Download Box v3.3.0 APK](https://img.shields.io/badge/Download-Latest_APK-A6E3A1?style=for-the-badge&logo=android&logoColor=1E1E2E)](https://github.com/jegly/Box/releases/latest)
 
 > **Note:** If you're using a custom ROM (LineageOS, GrapheneOS, CalyxOS), download the `custom-rom-support` APK from the [latest release](https://github.com/jegly/Box/releases/latest) instead.
 
@@ -74,7 +77,7 @@ If this project helped you, please ⭐️ star it to help others find it.
   > are tracked via GitHub tags. Use **Settings → Check for updates** to see if a
   > newer Box release is available.
 
-**Box is a security-hardened feature rich fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) — with on-device image generation, AI image upscaling, voice mode (speech-to-speech AI chat), voice input, multilingual text-to-speech, document analysis, vision AI, biometric lock, encrypted chat history, llama.cpp support, and GGUF model import and more**
+**Box is a security-hardened feature rich fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gallery) — with on-device image generation, Box Assist (spoken camera assistance for blind and low-vision users), AI image upscaling, voice mode (speech-to-speech AI chat), voice input, multilingual text-to-speech, document analysis, vision AI, biometric lock, encrypted chat history, llama.cpp support, and GGUF model import and more**
 
 > [!IMPORTANT]
 >## Disclaimer
@@ -87,12 +90,18 @@ Box is an independent community fork of [Google AI Edge Gallery](https://github.
 <details>
 <summary>
 
-## Changelog v1.0.7 – v3.2.0
+## Changelog v1.0.7 – v3.3.0
 
 </summary>
 
 | Version | Feature | Details |
 |---|---|---|
+| v3.3.0 | **🦯 Box Assist — a camera that talks (NEW)** | Spoken camera assistance for blind and low-vision users, under the Core tab. **Live mode** calls out people, obstacles and objects with how close they are; **Reading mode** reads mail, labels and menus aloud; **Describe mode** describes the scene, spoken as it thinks; **voice questions** — double-tap, ask out loud, and Box answers against what the camera sees. One download bundles everything (vision models + the Describe brain + speech recognition). Continuous autofocus with pre-capture focus sweeps, automatic flashlight in the dark, a blur check on Reading, physical volume-button controls, hold-to-repeat, TalkBack coexistence, screen never times out, and a launcher long-press shortcut straight into it. Fully offline. |
+| v3.3.0 | **⚡ GGUF engine rebuilt — real GPU acceleration** | The llama.cpp engine got a ground-up overhaul: **full Vulkan GPU offload** via the CPU/GPU chip in any GGUF chat, a massively faster CPU mode (a flaw routed CPU prompt processing through the GPU — **0.7 → 21 tok/s** on a Pixel 6a), **instant replies** (weights read up front, reopened chats replay their history during the loading screen), a **tokens/sec stat** under every GGUF reply, a new **Settings → GGUF Models** panel (context size, CPU threads, GPU layers, mmap, mlock, Q8 KV cache), sturdier imports with byte-verification, and automatic GPU→CPU retry. llama.cpp updated to a current build. |
+| v3.3.0 | **🎨 On-device image generation — FLUX.2 klein & Z-Image Turbo** | Two full text-to-image diffusion models running 100% on-device via LiteRT: **FLUX.2 klein (4B)** — photorealistic images in 4 steps (~7.4 GB download) — and **Z-Image Turbo** (9 steps), which shares nearly a gigabyte of files with klein so Box doesn't download them twice. Multi-gigabyte downloads now **resume** without refetching finished files, progress bars show honest totals, and a model only shows "downloaded" when every file is actually present. |
+| v3.3.0 | **🔍 Five new vision models — bundled, work instantly** | **Identify** now hosts four model families in one picker: MobileNet V2, **MobileNet V3 Large** (with a Pixel Tensor G5 NPU variant), **PlantNet** (identify **1,081 plant species** from a photo) and **DM-Count** crowd counting. New **Erase** tile — paint over anything in a photo and MI-GAN inpainting removes it (brush size, iterative erase, save to gallery). **Upscale** gains **EDSR ×4**. All bundled in the APK — no download, fully offline. |
+| v3.3.0 | **📱 Android 14 support** | Minimum Android version lowered from 15 to **Android 14** — Box now installs on a whole generation more of phones. |
+| v3.3.0 | **Fixes & polish** | Box Assist: fixed a first-open black screen (camera and mic permission requests raced each other) and made repeat scene descriptions as fast as the first. Fixed a case where an already-loaded model would never signal "ready", leaving features waiting forever. Download cards show accurate total sizes before you tap. |
 | v3.2.0 | **🎵 On-device music & sound generation** | Make music and sound effects from a text description — completely offline, nothing leaves your phone. Three tiers under the new **Sound** tab: **SoundGen** (quick clips & sound effects in seconds), **SoundGen HD** (higher-quality audio up to ~24s), and **SoundGen HD Long** (full pieces up to ~3 minutes). Set the length, then **play, save, or share** the result. The generator for each tier downloads on first use, then runs entirely on-device. |
 | v3.2.0 | **Identify — on-device image recognition** | Point Box at a photo and it tells you what's in it — 1000+ everyday objects, animals and scenes. Pick from your gallery or take a new shot. Fully offline, hardware-accelerated on supported devices. |
 | v3.2.0 | **Tabs reorganised — Sound & Core** | Clearer home tabs: **Sound** groups the audio features, **Core** groups chat & assistant. |
@@ -267,13 +276,16 @@ Box is a fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gall
 
 | Area | What Box adds |
 |---|---|
-| Inference engines | llama.cpp (GGUF LLMs), stable-diffusion.cpp (image gen), whisper.cpp (STT) alongside LiteRT |
+| Inference engines | llama.cpp (GGUF LLMs, full Vulkan GPU offload), stable-diffusion.cpp (image gen), whisper.cpp (STT) alongside LiteRT |
 | Model import | Import any local GGUF file — not limited to the curated download list |
 | NPU / TPU | All Snapdragon / Tensor / MediaTek variants bundled in one APK (upstream ships per-SoC) |
+| Box Assist | Spoken camera assistance for blind and low-vision users — Live object/proximity callouts, Reading (OCR aloud), Describe (scene answers, spoken as generated), voice questions. One bundled download, autofocus + auto-flashlight, volume-button controls, TalkBack-friendly, fully offline |
 | Voice mode / Vision mode | Free talk (continuous hands-free loop) and Vision talk (live camera + voice) |
-| Image generation | On-device Stable Diffusion via GGUF |
+| Image generation | On-device Stable Diffusion via GGUF, plus **FLUX.2 klein (4B)** and **Z-Image Turbo** diffusion via LiteRT |
+| Image recognition | **Identify**: MobileNet V2 / V3 Large (+ Tensor G5 NPU variant), **PlantNet** (1,081 plant species), **DM-Count** crowd counting — bundled, offline |
+| Erase (inpainting) | Paint over anything in a photo and MI-GAN removes it — brush size, iterative erase, save to gallery (bundled, offline) |
 | Music & sound generation | Generate music and sound effects from a text prompt, fully offline — quick clips, higher-quality audio, or long-form pieces up to ~3 minutes (**Sound** tab) |
-| Image upscaling | AI super-resolution — enlarge any photo 4× on-device (XLSR / Real-ESRGAN via LiteRT), models bundled, fully offline |
+| Image upscaling | AI super-resolution — enlarge any photo 4× on-device (XLSR / Real-ESRGAN / EDSR via LiteRT), models bundled, fully offline |
 | Speech-to-text | On-device Whisper STT, plus **SenseVoice** for fast multilingual transcription (Chinese / English / Japanese / Korean / Cantonese, ~5× faster than Whisper) |
 | Text-to-speech | **Supertonic** multilingual on-device TTS (5 languages, multiple voices) alongside Piper / Kokoro |
 | Document analysis | Attach text files (`.txt`, `.md`, `.csv`, `.kt`, etc.) directly in chat |
@@ -286,7 +298,7 @@ Box is a fork of [Google AI Edge Gallery](https://github.com/google-ai-edge/gall
 | Themes | Catppuccin (14 accents), Dracula (7 accents), a bright **Light** theme, and Material You — picker in Settings, with the home screen tinted to match the active theme |
 | Agent (skills + MCP) | 20 built-in skills (upstream has 9) plus Model Context Protocol — connect to remote MCP servers and give the model real tools, with per-call permission prompts |
 | Math rendering | LaTeX expressions rendered as Unicode in chat, including inside markdown table cells |
-| App shortcut | Long-press icon → AI Chat for instant cold-start navigation |
+| App shortcuts | Long-press icon → AI Chat or Box Assist for instant cold-start navigation |
 | In-app updates | Settings → Check for updates — compares against latest GitHub release, downloads correct variant |
 
 ---
@@ -303,14 +315,20 @@ With **Gemma 4 E2B / E4B** selected, the chat input expands to a full multimodal
 - 🎙 Record an audio clip or pick a WAV file to speak your question
 - 📷 Take a photo or pick from album for visual Q&A
 
+### Box Assist — Spoken Camera Assistance
+Built for blind and low-vision users, and useful to anyone who wants a talking camera. **Live mode** calls out people, obstacles and objects around you with how close they are; **Reading mode** reads mail, labels, menus and signs aloud; **Describe mode** answers "what's in front of me?" in a couple of spoken sentences — streamed aloud as the model generates; **double-tap and ask anything out loud** and Box answers against what the camera sees. One download includes everything (vision models, the Describe brain, and speech recognition). Continuous autofocus with a focus sweep before every capture, automatic flashlight when it's dark (Box tells you), a blur check so Reading waits for a sharp frame, physical volume-button controls, hold-to-repeat, TalkBack coexistence, and a launcher shortcut straight into it. Everything runs on-device.
+
 ### Local Diffusion
 On-device image generation powered by [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp). Runs Stable Diffusion 1.5 in GGUF format fully offline — no API key, no cloud. Configurable steps, CFG scale, seed, and image size presets. Save generated images directly to your gallery. Import your own GGUF diffusion models.
+
+### Image Generation — FLUX.2 klein & Z-Image Turbo
+Two full text-to-image diffusion models running 100% on-device via LiteRT. **FLUX.2 klein (4B)** generates photorealistic images in just 4 steps (~7.4 GB download); **Z-Image Turbo** runs in 9 steps and shares nearly a gigabyte of its files with klein, so Box is smart enough not to download those twice. Interrupted multi-gigabyte downloads resume without refetching finished files.
 
 ### Music & Sound Generation
 Generate music and sound effects from a text description — completely on-device, no internet, nothing leaves your phone. Under the **Sound** tab, pick a tier: **SoundGen** for quick clips and sound effects in seconds, **SoundGen HD** for higher-quality audio up to ~24 seconds, and **SoundGen HD Long** for full-length pieces up to ~3 minutes. Describe what you want, set the length, and hit Generate — then play it, save it to your device, or share it. The generator downloads on first use, then runs entirely offline.
 
 ### Image Upscaling (Super-Resolution)
-Enhance and enlarge any photo **4× on-device** with AI super-resolution. Pick an image, upscale it, and save the result to your gallery — fully offline, nothing leaves the device. Choose between **XLSR** (fastest, tiny), **Real-ESRGAN General** (balanced), and **Real-ESRGAN x4plus** (highest quality). All three models are bundled in the app and run via LiteRT, so there's nothing to download. Photos are auto-rotated (EXIF-aware) before upscaling.
+Enhance and enlarge any photo **4× on-device** with AI super-resolution. Pick an image, upscale it, and save the result to your gallery — fully offline, nothing leaves the device. Choose between **XLSR** (fastest, tiny), **Real-ESRGAN General** (balanced), **Real-ESRGAN x4plus** (highest quality), and **EDSR ×4**. All four models are bundled in the app and run via LiteRT, so there's nothing to download. Photos are auto-rotated (EXIF-aware) before upscaling.
 
 ### Voice Input
 On-device speech-to-text using [whisper.cpp](https://github.com/ggerganov/whisper.cpp) or **SenseVoice** ([Sherpa-ONNX](https://github.com/k2-fsa/sherpa-onnx)). Tap to record, tap to transcribe. Copy or clear results. Whisper supports Tiny through Large-v3 in multiple languages; **SenseVoice** adds fast multilingual transcription (Chinese / English / Japanese / Korean / Cantonese, ~5× faster than Whisper) with a live preview, a multi-message log, and optional emotion/event tags. Audio never leaves the device.
@@ -386,6 +404,8 @@ Supported npu accelerated hardware:
 ### GGUF Model Import
 Import any GGUF model file from local storage. At import time set the display name and choose the accelerator (CPU, GPU via OpenCL/Vulkan, or NPU via QNN delegate). Stable Diffusion GGUF models can also be imported for image generation.
 
+As of v3.3.0 the GGUF engine runs with **full Vulkan GPU offload** (flip the CPU/GPU chip in any GGUF chat), a much faster pure-CPU mode, instant replies (loading does the waiting — weights read up front, reopened chats replay history during the loading screen), a **tokens/sec stat** under every reply, and a **Settings → GGUF Models** panel for context size, CPU threads, GPU layers, mmap, mlock and Q8 KV cache.
+
 ### Hard Offline Mode
 A toggle in Settings forces the app into a fully airgapped state — all download attempts throw an exception and no network calls are made.
 
@@ -395,7 +415,7 @@ A toggle in Settings forces the app into a fully airgapped state — all downloa
 
 ### Requirements
 
-- Android 16+
+- Android 14+
 - ~4 GB of free storage for a typical quantised LLM
 - `6 GB of Ram
 
@@ -442,7 +462,7 @@ Open `Android/` in Android Studio and run on a physical device for best performa
 - **Hilt** — dependency injection
 - **Room + SQLCipher** — encrypted persistence
 - **LiteRT-LM** — LiteRT inference runtime for LLMs (GPU + NPU/TPU)
-- **LiteRT (CompiledModel)** — runs the bundled Qualcomm `.tflite` super-resolution models (image upscaling)
+- **LiteRT (CompiledModel)** — runs the bundled `.tflite` vision models (image upscaling, Identify/PlantNet/DM-Count, MI-GAN erase, Box Assist Live) and the FLUX.2 klein / Z-Image diffusion pipelines
 - **Qualcomm QNN / QAIRT 2.47** — Hexagon NPU runtime (V69–V81, bundled)
 - **LiteRT NPU dispatch** — auto-selects Qualcomm / Google Tensor / MediaTek at runtime
 - **llama.cpp** — GGUF LLM inference (git submodule)
