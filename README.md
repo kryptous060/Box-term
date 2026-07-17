@@ -15,7 +15,7 @@
 [![LiteRT](https://img.shields.io/badge/LiteRT-NPU-FF79C6.svg)](https://ai.google.dev/edge/litert)
 [![GGUF Import](https://img.shields.io/badge/GGUF-Import-50FA7B.svg)]()
 [![Snapdragon NPU](https://img.shields.io/badge/Snapdragon-NPU%208Gen2%2F3%2FElite-FF79C6.svg)](https://www.qualcomm.com/products/mobile/snapdragon)
-[![Google Tensor](https://img.shields.io/badge/Google%20Tensor-TPU%20G3%2FG4%2FG5%20(Pixel%208--10)-FF79C6.svg)](https://store.google.com/gb/category/phones)
+[![Google Tensor G5](https://img.shields.io/badge/Google%20Tensor%20G5-TPU%20(Pixel%2010)-FF79C6.svg)](https://store.google.com/gb/category/phones)
 [![MediaTek](https://img.shields.io/badge/MediaTek-NPU-FF79C6.svg)](https://www.mediatek.com/)
 [![Gemini Nano](https://img.shields.io/badge/Gemini%20Nano-ML%20Kit%20%C2%B7%20NPU-FF79C6.svg)](https://developers.google.com/ml-kit/language/gemini-nano)
 [![RAG](https://img.shields.io/badge/RAG-Retrieval%20Augmented-BD93F9.svg)](https://en.wikipedia.org/wiki/Retrieval-augmented_generation)
