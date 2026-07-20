@@ -531,8 +531,8 @@ Licensed under the Apache License, Version 2.0
 
   | Variant | SHA-256 |
   |---|---|
-  | main | `sha256:c4e8da86cc9f1fe0f15dccb0ed3346c278475382d1e8bcdab96f80b90a89e598` |
-  | custom-rom-support | `sha256:7258da3514d9ef09cefe61b487e7533c3683ad96e125b91f097cbdf2a394c015` |
+  | main | `sha256:b1d15fd046edd08ea2d7b6ba371a66e066a7a6a6b0159e383a5d143cfe400fcf` |
+  | custom-rom-support | `sha256:f29f8dc26072c4383d72e88dca49b608b7e3920e48341865ea76491b9b230898` |
 
   ### Signing certificate
 
