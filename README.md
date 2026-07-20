@@ -37,7 +37,7 @@
 If this project helped you, please ⭐️ star it to help others find it. 
 ##  Download
 
-[![Download Box v3.3.1 APK](https://img.shields.io/badge/Download-Latest_APK-A6E3A1?style=for-the-badge&logo=android&logoColor=1E1E2E)](https://github.com/jegly/Box/releases/latest)
+[![Download Box v3.3.2 APK](https://img.shields.io/badge/Download-Latest_APK-A6E3A1?style=for-the-badge&logo=android&logoColor=1E1E2E)](https://github.com/jegly/Box/releases/latest)
 
 > **Note:** If you're using a custom ROM (LineageOS, GrapheneOS, CalyxOS), download the `custom-rom-support` APK from the [latest release](https://github.com/jegly/Box/releases/latest) instead.
 
@@ -89,12 +89,15 @@ Box began as a fork of [Google AI Edge Gallery](https://github.com/google-ai-edg
 <details>
 <summary>
 
-## Changelog v1.0.7 – v3.3.1
+## Changelog v1.0.7 – v3.3.2
 
 </summary>
 
 | Version | Feature | Details |
 |---|---|---|
+| v3.3.2 | **Downloads fixed** | Model downloads are reliable again after 3.3.1 — no more failing mid-download or stalling at 100%. A previously stuck model downloads normally on the first try. |
+| v3.3.2 | **GGUF GPU crash fix (really this time)** | The Snapdragon GPU crash fix from 3.3.1 now actually ships in the build. |
+| v3.3.2 | **Biometric lock + database encryption** | The biometric app lock works alongside database encryption again — the two are independent, and the app re-locks when reopened. |
 | v3.3.1 | **Live Translator (NEW, Sound tab)** | Two people, two languages — tap your button, speak, and the other person reads and hears it in their language. Runs on your installed Gemma audio model (E2B/E4B), each phrase translated on its own for flat latency. 24 languages, fully offline. |
 | v3.3.1 | **4 new models** | **Granite 4.0 350M** (IBM's tiny fast tier, 468 MB), **MiniCPM5-1B** in int8 and int4 builds, and experimental **Gemma 4 26B (A4B)** — Google's mixture-of-experts Gemma for 16 GB+ RAM devices. |
 | v3.3.1 | **Fixes** | GGUF models no longer crash on GPU on some Snapdragon devices (Adreno driver quirk). Rotating or folding the phone no longer unloads the model. Custom-ROM: TPU/GPU chat works again on de-Googled devices (GrapheneOS). |
