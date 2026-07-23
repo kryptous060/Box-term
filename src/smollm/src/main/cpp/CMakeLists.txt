@@ -19,7 +19,7 @@ function(build_library target_name)
     target_include_directories(
             ${target_name}
             PUBLIC
-            ${LLAMA_DIR}
+            ${LLAMA_DIR}/include
             ${COMMON_DIR}
             ${GGML_DIR}/include
             ${GGML_DIR}/src
