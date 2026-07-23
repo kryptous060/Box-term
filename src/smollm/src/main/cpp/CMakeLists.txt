@@ -1,30 +1,13 @@
 cmake_minimum_required(VERSION 3.22.1)
 project("smollm")
 
-# llama.cpp must be cloned at the project root as a submodule
-# git submodule add https://github.com/ggerganov/llama.cpp.git
-add_subdirectory(../../../../llama.cpp llama.cpp)
-set(LLAMA_DIR "${CMAKE_SOURCE_DIR}/../../../../llama.cpp")
+# llama.cpp is expected to be built as a separate library/module and linked
+# CMake should find it via package config or it should be added to the build graph elsewhere.
+
+set(LLAMA_DIR "${CMAKE_SOURCE_DIR}/../../../../src/llama.cpp")
 set(GGML_DIR ${LLAMA_DIR}/ggml)
 set(COMMON_DIR ${LLAMA_DIR}/common)
 set(VENDOR_DIR ${LLAMA_DIR}/vendor)
-
-target_compile_options(
-        llama
-        PUBLIC
-        -fvisibility=hidden -fvisibility-inlines-hidden
-)
-target_compile_options(
-        llama
-        PUBLIC
-        -ffunction-sections -fdata-sections
-)
-target_link_options(
-        llama
-        PRIVATE
-        -Wl,--gc-sections -flto
-        -Wl,--exclude-libs,ALL
-)
 
 function(build_library target_name)
     add_library(
