@@ -4,8 +4,7 @@ project("smollm")
 # llama.cpp must be cloned at the project root as a submodule
 # git submodule add https://github.com/ggerganov/llama.cpp.git
 add_subdirectory(../../../../llama.cpp llama.cpp)
-
-set(LLAMA_DIR "../../../../llama.cpp")
+set(LLAMA_DIR "${CMAKE_SOURCE_DIR}/../../../../llama.cpp")
 set(GGML_DIR ${LLAMA_DIR}/ggml)
 set(COMMON_DIR ${LLAMA_DIR}/common)
 set(VENDOR_DIR ${LLAMA_DIR}/vendor)
