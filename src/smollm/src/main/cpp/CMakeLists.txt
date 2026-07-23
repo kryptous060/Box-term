@@ -1,14 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 project("smollm")
 
-# llama.cpp is expected to be built as a separate library/module and linked
-# CMake should find it via package config or it should be added to the build graph elsewhere.
-
-set(LLAMA_DIR "${CMAKE_SOURCE_DIR}/../../../../src/llama.cpp")
-set(GGML_DIR ${LLAMA_DIR}/ggml)
-set(COMMON_DIR ${LLAMA_DIR}/common)
-set(VENDOR_DIR ${LLAMA_DIR}/vendor)
-
 function(build_library target_name)
     add_library(
             ${target_name}
@@ -16,25 +8,17 @@ function(build_library target_name)
             LLMInference.cpp
             smollm.cpp
     )
+    # Assume 'llama' and 'common' targets are provided by the top-level CMake build.
     target_include_directories(
             ${target_name}
             PUBLIC
-            ${LLAMA_DIR}/include
-            ${COMMON_DIR}
-            ${GGML_DIR}/include
-            ${GGML_DIR}/src
-            ${GGML_DIR}/src/ggml-cpu
-            ${LLAMA_DIR}/include
-            ${VENDOR_DIR}
+            ${CMAKE_SOURCE_DIR}/../../../../llama.cpp/include
+            ${CMAKE_SOURCE_DIR}/../../../../llama.cpp/common
     )
     target_compile_options(
             ${target_name}
             PUBLIC
             -fvisibility=hidden -fvisibility-inlines-hidden
-    )
-    target_compile_options(
-            ${target_name}
-            PUBLIC
             -ffunction-sections -fdata-sections
     )
     target_link_libraries(
