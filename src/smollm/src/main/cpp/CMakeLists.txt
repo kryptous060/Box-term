@@ -7,13 +7,14 @@ function(build_library target_name)
             SHARED
             LLMInference.cpp
             smollm.cpp
-    )
     # Assume 'llama' and 'common' targets are provided by the top-level CMake build.
     target_include_directories(
             ${target_name}
             PUBLIC
             ${CMAKE_SOURCE_DIR}/../../../../llama.cpp
             ${CMAKE_SOURCE_DIR}/../../../../llama.cpp/include
+            ${CMAKE_SOURCE_DIR}/../../../../llama.cpp/common
+    )
             ${CMAKE_SOURCE_DIR}/../../../../llama.cpp/common
     )
     target_compile_options(
