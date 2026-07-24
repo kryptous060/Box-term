@@ -126,6 +126,7 @@ dependencies {
   // Box: stable-diffusion.cpp native inference for image generation
   implementation(project(":stablediffusion"))
   implementation(project(":whisper"))
+  implementation(project(":termux-app"))
 
   // Box: Material 3 adaptive navigation
   implementation(libs.androidx.material3.adaptive.navigation.suite)
