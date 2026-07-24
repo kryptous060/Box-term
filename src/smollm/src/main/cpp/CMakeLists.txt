@@ -11,11 +11,16 @@ function(build_library target_name)
             LLMInference.cpp
             smollm.cpp
     )
+    # Construct absolute path to the project root
+    get_filename_component(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../../" ABSOLUTE)
+    set(LLAMA_DIR "${SRC_DIR}/llama.cpp")
+    
     target_include_directories(
             ${target_name}
             PUBLIC
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../../../llama.cpp/include
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../../../llama.cpp/common
+            ${LLAMA_DIR}
+            ${LLAMA_DIR}/include
+            ${LLAMA_DIR}/common
     )
     target_compile_options(
             ${target_name}
