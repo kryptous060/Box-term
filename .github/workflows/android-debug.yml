@@ -15,7 +15,7 @@ jobs:
       uses: actions/setup-java@v4
       with:
         java-version: '21'
-        distribution: 'temurin'
+        distribution: 'jetbrains'
         java-package: jdk
     - name: Verify Java Setup
       run: java -version && javac -version
