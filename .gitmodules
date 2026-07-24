@@ -1,0 +1,9 @@
+[submodule "src/llama.cpp"]
+	path = src/llama.cpp
+	url = https://github.com/ggerganov/llama.cpp.git
+[submodule "src/stable-diffusion.cpp"]
+	path = src/stable-diffusion.cpp
+	url = https://github.com/leejet/stable-diffusion.cpp.git
+[submodule "src/whisper.cpp"]
+	path = src/whisper.cpp
+	url = https://github.com/ggerganov/whisper.cpp.git
