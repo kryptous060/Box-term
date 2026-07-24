@@ -1,9 +1,9 @@
-[submodule "src/llama.cpp"]
-	path = src/llama.cpp
+[submodule "Android/src/llama.cpp"]
+	path = Android/src/llama.cpp
 	url = https://github.com/ggerganov/llama.cpp.git
-[submodule "src/stable-diffusion.cpp"]
-	path = src/stable-diffusion.cpp
+[submodule "Android/src/stable-diffusion.cpp"]
+	path = Android/src/stable-diffusion.cpp
 	url = https://github.com/leejet/stable-diffusion.cpp.git
-[submodule "src/whisper.cpp"]
-	path = src/whisper.cpp
+[submodule "Android/src/whisper.cpp"]
+	path = Android/src/whisper.cpp
 	url = https://github.com/ggerganov/whisper.cpp.git
