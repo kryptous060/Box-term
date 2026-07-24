@@ -22,7 +22,9 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x src/gradlew
     - name: Debug Submodule Structure
-      run: ls -R src/llama.cpp
+      run: |
+        ls -R src/llama.cpp
+        ls -l src/llama.cpp/include/llama.h
     - name: Build Debug APK
       run: cd src && ./gradlew :app:assembleDebug --info --debug
     - name: Upload Debug APK
