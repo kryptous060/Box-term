@@ -21,6 +21,7 @@ android {
                 arguments += "-DLLAMA_BUILD_COMMON=ON"
                 arguments += "-DLLAMA_CURL=OFF"
                 arguments += "-DGGML_LLAMAFILE=OFF"
+                arguments += "-DPROJECT_ROOT=${project.rootDir}"
             }
         }
     }
