@@ -1,4 +1,4 @@
-name: Build Debug APK
+name: Build NPU-accelerated SD
 
 on:
   push:
@@ -6,34 +6,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'jetbrains'
-        java-package: jdk
-    - name: Verify Java Setup
-      run: java -version && javac -version
-    - name: Grant execute permission for gradlew
-      run: chmod +x src/gradlew
-    - name: Debug Submodule Structure
-      run: |
-        ls -R src/llama.cpp
-        ls -l src/llama.cpp/include/llama.h
-    - name: Build Debug APK
-      run: cd src && ./gradlew :app:assembleDebug --info --debug
-    - name: Upload Debug APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-debug
-        path: src/app/build/outputs/apk/debug/app-debug.apk
-
   build-sd:
     runs-on: ubuntu-latest
     steps:
@@ -42,6 +14,8 @@ jobs:
         submodules: recursive
     - name: Set up NDK
       uses: android-actions/setup-android@v3
+    - name: Install build tools
+      run: sudo apt-get update && sudo apt-get install -y build-essential cmake
     - name: Build stable-diffusion.cpp
       run: |
         export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
