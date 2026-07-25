@@ -18,7 +18,7 @@ android {
     }
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 35
         buildConfigField("String", "TERMUX_PACKAGE_VARIANT", "\"debug\"")
     }
 }
