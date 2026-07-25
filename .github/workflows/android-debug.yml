@@ -33,3 +33,29 @@ jobs:
       with:
         name: app-debug
         path: src/app/build/outputs/apk/debug/app-debug.apk
+
+  build-sd:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    - name: Set up NDK
+      uses: android-actions/setup-android@v3
+    - name: Build stable-diffusion.cpp
+      run: |
+        export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
+        cd src/stable-diffusion.cpp
+        mkdir build && cd build
+        cmake .. \
+          -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+          -DANDROID_ABI=arm64-v8a \
+          -DANDROID_PLATFORM=android-28 \
+          -DSD_VULKAN=ON \
+          -DANDROID=ON
+        make -j4 sd-cli
+    - name: Upload SD binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: sd-cli
+        path: src/stable-diffusion.cpp/build/bin/sd-cli
