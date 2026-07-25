@@ -41,9 +41,9 @@ plugins {
 dependencyResolutionManagement {
   repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
   repositories {
-    //        mavenLocal()
     google()
     mavenCentral()
+    maven { url = uri("https://jitpack.io") }
   }
 }
 
@@ -55,3 +55,9 @@ include(":stablediffusion")
 include(":whisper")
 include(":termux-app")
 project(":termux-app").projectDir = file("termux-app/app")
+include(":termux-app:terminal-view")
+project(":termux-app:terminal-view").projectDir = file("termux-app/terminal-view")
+include(":termux-app:termux-shared")
+project(":termux-app:termux-shared").projectDir = file("termux-app/termux-shared")
+include(":termux-app:terminal-emulator")
+project(":termux-app:terminal-emulator").projectDir = file("termux-app/terminal-emulator")
