@@ -38,7 +38,7 @@ jobs:
           -DANDROID_PLATFORM=android-28 \
           -DSD_VULKAN=ON \
           -DVulkan_INCLUDE_DIR=/usr/include/vulkan \
-          -DGLSLC_EXECUTABLE=$GLSLC_PATH \
+          -DVulkan_GLSLC_EXECUTABLE=$GLSLC_PATH \
           -DANDROID=ON
         make -j4 sd-cli
     - name: Upload SD binary
