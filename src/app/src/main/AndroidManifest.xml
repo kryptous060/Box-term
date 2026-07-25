@@ -64,7 +64,8 @@
         android:theme="@style/Theme.Gallery"
         android:memtagMode="async"
         android:enableOnBackInvokedCallback="true"
-        tools:targetApi="36">
+        tools:targetApi="36"
+        tools:replace="android:name,android:label,android:roundIcon,android:supportsRtl,android:theme">
         <!--
           android:configChanges="uiMode" tells the system don't destroy and
           recreate the activity when UI mode changes (e.g. setting dark mode).
