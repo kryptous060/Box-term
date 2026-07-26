@@ -24,6 +24,13 @@ jobs:
         NDK_PATH=$(ls -d /usr/local/lib/android/sdk/ndk/* | head -n 1)
         echo "Using NDK at: $NDK_PATH"
 
+        # Locate Vulkan SDK components
+        GLSLC_PATH=$(which glslangValidator)
+        echo "Using glslangValidator at: $GLSLC_PATH"
+
+        # Add the directory containing glslangValidator to PATH
+        export PATH=$(dirname $GLSLC_PATH):$PATH
+
         cd src/stable-diffusion.cpp
         mkdir build && cd build
         cmake .. \
@@ -32,9 +39,9 @@ jobs:
           -DANDROID_PLATFORM=android-28 \
           -DSD_VULKAN=ON \
           -DVulkan_INCLUDE_DIR=/usr/include/vulkan \
+          -DVulkan_GLSLC_EXECUTABLE=$GLSLC_PATH \
           -DANDROID=ON
         make -j4 sd-cli
-    - name: Upload SD binary
       uses: actions/upload-artifact@v4
       with:
         name: sd-cli
