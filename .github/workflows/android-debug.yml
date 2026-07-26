@@ -17,10 +17,6 @@ jobs:
     - name: Install build tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake glslang-tools vulkan-tools libvulkan-dev
-    - name: Install build tools
-      run: |
-        sudo apt-get update
         sudo apt-get install -y build-essential cmake glslang-tools vulkan-tools libvulkan-dev shaderc
     - name: Build stable-diffusion.cpp
       run: |
@@ -38,6 +34,7 @@ jobs:
           -DVulkan_INCLUDE_DIR=/usr/include/vulkan \
           -DANDROID=ON
         make -j4 sd-cli
+    - name: Upload SD binary
       uses: actions/upload-artifact@v4
       with:
         name: sd-cli
