@@ -42,6 +42,7 @@ jobs:
           -DVulkan_GLSLC_EXECUTABLE=$GLSLC_PATH \
           -DANDROID=ON
         make -j4 sd-cli
+    - name: Upload SD binary
       uses: actions/upload-artifact@v4
       with:
         name: sd-cli
