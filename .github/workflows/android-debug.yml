@@ -17,7 +17,7 @@ jobs:
     - name: Install build tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake glslang-tools vulkan-tools libvulkan-dev shaderc
+        sudo apt-get install -y build-essential cmake glslang-tools vulkan-tools libvulkan-dev libshaderc-dev
     - name: Build stable-diffusion.cpp
       run: |
         # Dynamically find the NDK path
