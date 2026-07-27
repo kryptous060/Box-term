@@ -3,7 +3,7 @@
 	url = https://github.com/ggerganov/llama.cpp.git
 [submodule "Android/src/stable-diffusion.cpp"]
 	path = Android/src/stable-diffusion.cpp
-	url = https://github.com/leejet/stable-diffusion.cpp.git
+	url = git@github.com:kryptous060/Box-term.git
 [submodule "Android/src/whisper.cpp"]
 	path = Android/src/whisper.cpp
 	url = https://github.com/ggerganov/whisper.cpp.git
