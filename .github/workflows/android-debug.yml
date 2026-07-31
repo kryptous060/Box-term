@@ -12,7 +12,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: Checkout submodules
       run: |
-        git submodule update --init --recursive --remote
+        git submodule sync --recursive
+        git submodule update --init --recursive --remote --force
     - name: Set up NDK
       uses: android-actions/setup-android@v3
     - name: Install build tools
