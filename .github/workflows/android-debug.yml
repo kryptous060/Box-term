@@ -14,7 +14,7 @@ jobs:
         fetch-depth: 1
     - name: Checkout submodules
       run: |
-        git submodule update --init --depth 1 src/stable-diffusion.cpp
+        git submodule update --init --remote --force src/stable-diffusion.cpp
     - name: Set up NDK
       uses: android-actions/setup-android@v3
     - name: Install build tools
