@@ -14,13 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
-    - name: Checkout submodules
+    - name: Initialize and update submodules
       run: |
-        rm -rf src/stable-diffusion.cpp/ggml
-        git submodule sync --recursive
-        git submodule update --init --remote --force src/stable-diffusion.cpp
+        git submodule update --init --recursive
     - name: Set up NDK
       uses: android-actions/setup-android@v3
     - name: Install build tools
