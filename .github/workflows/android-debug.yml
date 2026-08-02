@@ -27,9 +27,8 @@ jobs:
         sudo apt-get install -y build-essential cmake glslang-tools vulkan-tools libvulkan-dev libshaderc-dev
     - name: Build stable-diffusion.cpp
       run: |
-        # Dynamically find the NDK path
-        NDK_PATH=$(ls -d /usr/local/lib/android/sdk/ndk/* | head -n 1)
-        echo "Using NDK at: $NDK_PATH"
+        # Use the standard ANDROID_NDK_HOME variable
+        echo "Using NDK at: ${ANDROID_NDK_HOME}"
 
         # Explicitly locate glslc (provided by glslang-tools)
         GLSLC_PATH=$(which glslc)
@@ -43,7 +42,7 @@ jobs:
         
         set -x
         cmake .. \
-          -DCMAKE_TOOLCHAIN_FILE="${NDK_PATH}/build/cmake/android.toolchain.cmake" \
+          -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake" \
           -DANDROID_ABI=arm64-v8a \
           -DANDROID_PLATFORM=android-28 \
           -DSD_VULKAN=ON \
