@@ -36,7 +36,11 @@ jobs:
         echo "Using glslc at: $GLSLC_PATH"
 
         cd src/stable-diffusion.cpp
-        mkdir build && cd build
+        echo "Current directory: $(pwd)"
+        
+        mkdir -p build && cd build
+        echo "Running cmake..."
+        
         cmake .. \
           -DCMAKE_TOOLCHAIN_FILE=$NDK_PATH/build/cmake/android.toolchain.cmake \
           -DCMAKE_PREFIX_PATH=/usr \
@@ -44,8 +48,10 @@ jobs:
           -DANDROID_PLATFORM=android-28 \
           -DSD_VULKAN=ON \
           -DVulkan_GLSLC_EXECUTABLE=$GLSLC_PATH \
-          -DANDROID=ON
-        make -j4 sd-cli
+          -DANDROID=ON || { echo "CMake failed"; exit 1; }
+        
+        echo "CMake completed. Running make..."
+        make -j4 sd-cli || { echo "Make failed"; exit 1; }
     - name: Upload SD binary
       uses: actions/upload-artifact@v4
       with:
