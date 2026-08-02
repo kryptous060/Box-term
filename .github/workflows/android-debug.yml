@@ -30,9 +30,14 @@ jobs:
         # Use the standard ANDROID_NDK_HOME variable
         echo "Using NDK at: ${ANDROID_NDK_HOME}"
 
-        # Explicitly locate glslc (provided by glslang-tools)
-        GLSLC_PATH=$(which glslc)
-        echo "Using glslc at: $GLSLC_PATH"
+        # Safely locate glslc
+        if command -v glslc &> /dev/null; then
+          GLSLC_PATH=$(which glslc)
+          echo "Using glslc at: $GLSLC_PATH"
+        else
+          echo "glslc not found!"
+          exit 1
+        fi
 
         cd src/stable-diffusion.cpp
         echo "Current directory: $(pwd)"
