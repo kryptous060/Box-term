@@ -26,7 +26,7 @@ jobs:
     - name: Install glslc
       run: |
         sudo apt-get update
-        sudo apt-get install -y glslc spirv-headers
+        sudo apt-get install -y glslc spirv-headers vulkan-headers
     - name: Build stable-diffusion.cpp
       run: |
         # Use the standard ANDROID_NDK_HOME variable
@@ -54,6 +54,7 @@ jobs:
           -DANDROID_PLATFORM=android-28 \
           -DSD_VULKAN=ON \
           -DVulkan_GLSLC_EXECUTABLE="${GLSLC_PATH}" \
+          -DVulkan_INCLUDE_DIR=/usr/include \
           -DSPIRV-Headers_DIR=/usr/share/cmake/SPIRV-Headers \
           -DANDROID=ON \
           -DCMAKE_BUILD_TYPE=Release
