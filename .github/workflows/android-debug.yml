@@ -17,6 +17,9 @@ jobs:
     - name: Initialize and update submodules
       run: |
         git submodule update --init --recursive
+        git submodule foreach --recursive git fetch origin
+        git submodule foreach --recursive git checkout master
+        git submodule update --init --recursive --remote --force
     - name: Set up NDK
       uses: android-actions/setup-android@v3
     - name: Install build tools
