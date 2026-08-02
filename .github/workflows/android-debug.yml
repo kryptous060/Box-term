@@ -42,6 +42,8 @@ jobs:
         echo "Running cmake..."
         
         set -x
+        # Run CMake and capture output, but do not exit immediately on failure
+        set +e
         cmake .. \
           -DCMAKE_TOOLCHAIN_FILE=$NDK_PATH/build/cmake/android.toolchain.cmake \
           -DCMAKE_PREFIX_PATH=/usr \
@@ -49,13 +51,17 @@ jobs:
           -DANDROID_PLATFORM=android-28 \
           -DSD_VULKAN=ON \
           -DVulkan_GLSLC_EXECUTABLE=$GLSLC_PATH \
-          -DANDROID=ON > cmake_log.txt 2>&1 || { 
-            echo "CMake failed. Output:"
-            cat cmake_log.txt
-            exit 1 
-          }
+          -DANDROID=ON > cmake_log.txt 2>&1
+
+        CMAKE_EXIT_CODE=$?
+        set -e
         
-        echo "CMake completed. Running make..."
+        if [ $CMAKE_EXIT_CODE -ne 0 ]; then
+          echo "CMake failed with exit code $CMAKE_EXIT_CODE"
+          echo "Full CMake output:"
+          cat cmake_log.txt
+          exit $CMAKE_EXIT_CODE
+        fi
         
         echo "CMake completed. Running make..."
         make -j4 sd-cli || { echo "Make failed"; exit 1; }
