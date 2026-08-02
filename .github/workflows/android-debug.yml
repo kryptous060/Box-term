@@ -27,6 +27,9 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y glslc spirv-headers libvulkan-dev
+    - name: Get Vulkan-Headers (for vulkan.hpp)
+      run: |
+        git clone --depth 1 https://github.com/KhronosGroup/Vulkan-Headers.git /tmp/Vulkan-Headers
     - name: Build stable-diffusion.cpp
       run: |
         # Use the standard ANDROID_NDK_HOME variable
@@ -54,7 +57,7 @@ jobs:
           -DANDROID_PLATFORM=android-28 \
           -DSD_VULKAN=ON \
           -DVulkan_GLSLC_EXECUTABLE="${GLSLC_PATH}" \
-          -DVulkan_INCLUDE_DIR=/usr/include \
+          -DVulkan_INCLUDE_DIR=/tmp/Vulkan-Headers/include \
           -DSPIRV-Headers_DIR=/usr/share/cmake/SPIRV-Headers \
           -DANDROID=ON \
           -DCMAKE_BUILD_TYPE=Release
