@@ -64,8 +64,8 @@ jobs:
           -DANDROID_PLATFORM=android-28 \
           -DSD_VULKAN=ON \
           -DVulkan_GLSLC_EXECUTABLE="${GLSLC_PATH}" \
-          -DVulkan_INCLUDE_DIR=/tmp/Vulkan-Headers/include \
           -DSPIRV-Headers_DIR=/tmp/spirv-install/share/cmake/SPIRV-Headers \
+          -DCMAKE_CXX_FLAGS="-I/tmp/Vulkan-Headers/include -I/tmp/spirv-install/include" \
           -DANDROID=ON \
           -DCMAKE_BUILD_TYPE=Release
         
