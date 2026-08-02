@@ -23,6 +23,10 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential cmake glslang-tools vulkan-tools libvulkan-dev libshaderc-dev
+    - name: Install glslc
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y glslc
     - name: Build stable-diffusion.cpp
       run: |
         # Use the standard ANDROID_NDK_HOME variable
