@@ -27,16 +27,10 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y glslc libvulkan-dev
-    - name: Get and Install Required Headers
+    - name: Get Required Headers (Vulkan & SPIRV)
       run: |
-        # 1. Clone Vulkan-Headers (header-only library)
         git clone --depth 1 https://github.com/KhronosGroup/Vulkan-Headers.git /tmp/Vulkan-Headers
-        # 2. Clone, build, and install SPIRV-Headers to generate CMake config files
-        git clone --depth 1 https://github.com/KhronosGroup/SPIRV-Headers.git /tmp/SPIRV-Headers-src
-        cd /tmp/SPIRV-Headers-src
-        mkdir -p build && cd build
-        cmake .. -DCMAKE_INSTALL_PREFIX=/tmp/spirv-install
-        cmake --build . --target install
+        git clone --depth 1 https://github.com/KhronosGroup/SPIRV-Headers.git /tmp/SPIRV-Headers
     - name: Build stable-diffusion.cpp
       run: |
         # Use the standard ANDROID_NDK_HOME variable
@@ -64,8 +58,7 @@ jobs:
           -DANDROID_PLATFORM=android-28 \
           -DSD_VULKAN=ON \
           -DVulkan_GLSLC_EXECUTABLE="${GLSLC_PATH}" \
-          -DVulkan_INCLUDE_DIR=/tmp/Vulkan-Headers/include \
-          -DSPIRV-Headers_DIR=/tmp/spirv-install/share/cmake/SPIRV-Headers \
+          -DCMAKE_CXX_FLAGS="-I/tmp/Vulkan-Headers/include -I/tmp/SPIRV-Headers/include" \
           -DANDROID=ON \
           -DCMAKE_BUILD_TYPE=Release
         
