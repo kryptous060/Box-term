@@ -1,0 +1,45 @@
+﻿2026-08-02T01:06:34.0031976Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-08-02T01:06:34.0033285Z Post job cleanup.
+2026-08-02T01:06:34.0724727Z [command]/usr/bin/git version
+2026-08-02T01:06:34.0754608Z git version 2.54.0
+2026-08-02T01:06:34.0782299Z Temporarily overriding HOME='/home/runner/work/_temp/aa0d2574-cf20-487b-80a9-2337d90e87b4' before making global git config changes
+2026-08-02T01:06:34.0786197Z Adding repository directory to the temporary git global config as a safe directory
+2026-08-02T01:06:34.0787789Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Box-term/Box-term
+2026-08-02T01:06:34.0817022Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-08-02T01:06:34.0844577Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-08-02T01:06:34.1025183Z Entering 'Android/src/llama.cpp'
+2026-08-02T01:06:34.1061078Z Entering 'Android/src/stable-diffusion.cpp'
+2026-08-02T01:06:34.1089218Z Entering 'Android/src/whisper.cpp'
+2026-08-02T01:06:34.1122475Z Entering 'src/llama.cpp'
+2026-08-02T01:06:34.1150729Z Entering 'src/stable-diffusion.cpp'
+2026-08-02T01:06:34.1179400Z Entering 'src/whisper.cpp'
+2026-08-02T01:06:34.1235976Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-08-02T01:06:34.1264496Z http.https://github.com/.extraheader
+2026-08-02T01:06:34.1265617Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-08-02T01:06:34.1315867Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-08-02T01:06:34.1474746Z Entering 'Android/src/llama.cpp'
+2026-08-02T01:06:34.1508691Z Entering 'Android/src/stable-diffusion.cpp'
+2026-08-02T01:06:34.1543017Z Entering 'Android/src/whisper.cpp'
+2026-08-02T01:06:34.1572996Z Entering 'src/llama.cpp'
+2026-08-02T01:06:34.1602229Z Entering 'src/stable-diffusion.cpp'
+2026-08-02T01:06:34.1631256Z Entering 'src/whisper.cpp'
+2026-08-02T01:06:34.1671809Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-08-02T01:06:34.1698890Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-08-02T01:06:34.1844588Z Entering 'Android/src/llama.cpp'
+2026-08-02T01:06:34.1859572Z file:/home/runner/work/Box-term/Box-term/.git/modules/Android/src/llama.cpp/config	remote.origin.url
+2026-08-02T01:06:34.1873448Z Entering 'Android/src/stable-diffusion.cpp'
+2026-08-02T01:06:34.1887947Z file:/home/runner/work/Box-term/Box-term/.git/modules/Android/src/stable-diffusion.cpp/config	remote.origin.url
+2026-08-02T01:06:34.1899350Z Entering 'Android/src/whisper.cpp'
+2026-08-02T01:06:34.1912725Z file:/home/runner/work/Box-term/Box-term/.git/modules/Android/src/whisper.cpp/config	remote.origin.url
+2026-08-02T01:06:34.1924921Z Entering 'src/llama.cpp'
+2026-08-02T01:06:34.1938469Z file:/home/runner/work/Box-term/Box-term/.git/modules/src/llama.cpp/config	remote.origin.url
+2026-08-02T01:06:34.1949709Z Entering 'src/stable-diffusion.cpp'
+2026-08-02T01:06:34.1963313Z file:/home/runner/work/Box-term/Box-term/.git/modules/src/stable-diffusion.cpp/config	remote.origin.url
+2026-08-02T01:06:34.1975306Z Entering 'src/whisper.cpp'
+2026-08-02T01:06:34.1988262Z file:/home/runner/work/Box-term/Box-term/.git/modules/src/whisper.cpp/config	remote.origin.url
+2026-08-02T01:06:34.2011203Z [command]/usr/bin/git config --file /home/runner/work/Box-term/Box-term/.git/modules/Android/src/llama.cpp/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-08-02T01:06:34.2036308Z [command]/usr/bin/git config --file /home/runner/work/Box-term/Box-term/.git/modules/Android/src/stable-diffusion.cpp/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-08-02T01:06:34.2058699Z [command]/usr/bin/git config --file /home/runner/work/Box-term/Box-term/.git/modules/Android/src/whisper.cpp/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-08-02T01:06:34.2079514Z [command]/usr/bin/git config --file /home/runner/work/Box-term/Box-term/.git/modules/src/llama.cpp/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-08-02T01:06:34.2101473Z [command]/usr/bin/git config --file /home/runner/work/Box-term/Box-term/.git/modules/src/stable-diffusion.cpp/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-08-02T01:06:34.2122932Z [command]/usr/bin/git config --file /home/runner/work/Box-term/Box-term/.git/modules/src/whisper.cpp/config --name-only --get-regexp ^includeIf\.gitdir:

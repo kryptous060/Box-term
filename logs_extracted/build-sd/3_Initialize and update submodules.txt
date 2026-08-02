@@ -1,0 +1,20 @@
+﻿2026-08-02T01:05:45.2664255Z ##[group]Run git submodule update --init --recursive
+2026-08-02T01:05:45.2664747Z [36;1mgit submodule update --init --recursive[0m
+2026-08-02T01:05:45.2692948Z shell: /usr/bin/bash -e {0}
+2026-08-02T01:05:45.2693261Z ##[endgroup]
+2026-08-02T01:05:45.2956562Z Submodule 'Android/src/llama.cpp' (https://github.com/ggerganov/llama.cpp.git) registered for path 'Android/src/llama.cpp'
+2026-08-02T01:05:45.2959186Z Submodule 'Android/src/stable-diffusion.cpp' (https://github.com/kryptous060/Box-term.git) registered for path 'Android/src/stable-diffusion.cpp'
+2026-08-02T01:05:45.4061010Z Submodule 'Android/src/whisper.cpp' (https://github.com/ggerganov/whisper.cpp.git) registered for path 'Android/src/whisper.cpp'
+2026-08-02T01:05:45.4064954Z Submodule 'src/llama.cpp' (https://github.com/ggerganov/llama.cpp.git) registered for path 'src/llama.cpp'
+2026-08-02T01:05:45.4067878Z Submodule 'src/stable-diffusion.cpp' (https://github.com/leejet/stable-diffusion.cpp.git) registered for path 'src/stable-diffusion.cpp'
+2026-08-02T01:05:45.4848182Z Submodule 'src/whisper.cpp' (https://github.com/ggerganov/whisper.cpp.git) registered for path 'src/whisper.cpp'
+2026-08-02T01:05:45.4871538Z Cloning into '/home/runner/work/Box-term/Box-term/Android/src/llama.cpp'...
+2026-08-02T01:06:01.2158683Z Cloning into '/home/runner/work/Box-term/Box-term/Android/src/stable-diffusion.cpp'...
+2026-08-02T01:06:04.2929139Z Cloning into '/home/runner/work/Box-term/Box-term/Android/src/whisper.cpp'...
+2026-08-02T01:06:08.1278142Z Cloning into '/home/runner/work/Box-term/Box-term/src/llama.cpp'...
+2026-08-02T01:06:23.7316295Z Cloning into '/home/runner/work/Box-term/Box-term/src/stable-diffusion.cpp'...
+2026-08-02T01:06:28.9521522Z Cloning into '/home/runner/work/Box-term/Box-term/src/whisper.cpp'...
+2026-08-02T01:06:33.5986892Z Submodule path 'Android/src/llama.cpp': checked out '408225bb1a63faef725685515cfe583fcc964d09'
+2026-08-02T01:06:33.9873544Z fatal: remote error: upload-pack: not our ref 8959d4428fd3307ce58eab11292fdb99eea4e744
+2026-08-02T01:06:33.9884747Z fatal: Fetched in submodule path 'Android/src/stable-diffusion.cpp', but it did not contain 8959d4428fd3307ce58eab11292fdb99eea4e744. Direct fetching of that commit failed.
+2026-08-02T01:06:33.9903302Z ##[error]Process completed with exit code 128.
