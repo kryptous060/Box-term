@@ -31,9 +31,9 @@ jobs:
         NDK_PATH=$(ls -d /usr/local/lib/android/sdk/ndk/* | head -n 1)
         echo "Using NDK at: $NDK_PATH"
 
-        # Explicitly locate glslangValidator
-        GLSLC_PATH=$(which glslangValidator)
-        echo "Using glslangValidator at: $GLSLC_PATH"
+        # Explicitly locate glslc (provided by glslang-tools)
+        GLSLC_PATH=$(which glslc)
+        echo "Using glslc at: $GLSLC_PATH"
 
         cd src/stable-diffusion.cpp
         mkdir build && cd build
@@ -43,7 +43,7 @@ jobs:
           -DANDROID_ABI=arm64-v8a \
           -DANDROID_PLATFORM=android-28 \
           -DSD_VULKAN=ON \
-          -DGLSLC_EXECUTABLE=$GLSLC_PATH \
+          -DVulkan_GLSLC_EXECUTABLE=$GLSLC_PATH \
           -DANDROID=ON
         make -j4 sd-cli
     - name: Upload SD binary
