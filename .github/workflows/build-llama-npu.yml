@@ -20,11 +20,16 @@ jobs:
           --volume ${{ github.workspace }}:/workspace \
           --platform linux/amd64 \
           ghcr.io/snapdragon-toolchain/arm64-android:v0.7 \
-          bash -c "cp docs/backend/snapdragon/CMakeUserPresets.json . && cmake --preset arm64-android-snapdragon-release -B build-snapdragon && cmake --build build-snapdragon --config Release -j$(nproc) && cmake --install build-snapdragon --prefix pkg-snapdragon"
+          bash -c '
+            cp docs/backend/snapdragon/CMakeUserPresets.json .
+            cmake --preset arm64-android-snapdragon-release -B build-snapdragon
+            cmake --build build-snapdragon --config Release -j$(nproc)
+            cmake --install build-snapdragon --prefix pkg-snapdragon
+          '
 
     - name: Upload NPU Binaries & Libraries Artifact
       uses: actions/upload-artifact@v4
       with:
         name: pkg-snapdragon
-        path: pkg-snapdra
-gon/
+        path: pkg-snapdrag
+        on/
