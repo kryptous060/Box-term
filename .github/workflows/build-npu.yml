@@ -1,0 +1,45 @@
+name: Build Snapdragon NPU/OpenCL Binaries
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-snapdragon:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/snapdragon-toolchain/arm64-android:v0.7
+      options: --platform linux/amd64
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure CMake Presets for Hexagon NPU & OpenCL
+        run: |
+          # Copy the preset template provided by llama.cpp
+          cp docs/backend/snapdragon/CMakeUserPresets.json .
+          
+          # Run the official android snapshot preset targeting Hexagon + OpenCL
+          cmake --preset arm64-android-snapdragon-release -B build-snapdragon \
+            -DGGML_HEXAGON=ON \
+            -DGGML_OPENCL=ON
+
+      - name: Build llama-server
+        run: |
+          cmake --build build-snapdragon --target llama-server -j$(nproc)
+
+      - name: Package Binaries
+        run: |
+          cmake --install build-snapdragon --prefix pkg-snapdragon
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapdragon-npu-llama-server
+          path: pkg-snapdragon/
