@@ -23,7 +23,6 @@ jobs:
 
       - name: Copy CMake User Presets
         run: |
-          # Adjust path based on where llama.cpp is located in your repo structure
           cp Android/src/llama.cpp/docs/backend/snapdragon/CMakeUserPresets.json Android/src/llama.cpp/
 
       - name: Configure CMake Preset for Android Hexagon & OpenCL
@@ -33,10 +32,10 @@ jobs:
             -DGGML_HEXAGON=ON \
             -DGGML_OPENCL=ON
 
-      - name: Build llama-server
+      - name: Build All Targets (including HTP DSP binaries)
         working-directory: Android/src/llama.cpp
         run: |
-          cmake --build build-snapdragon --target llama-server -j$(nproc)
+          cmake --build build-snapdragon -j$(nproc)
 
       - name: Install / Package Binaries
         working-directory: Android/src/llama.cpp
