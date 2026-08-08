@@ -19,13 +19,14 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0
 
-      - name: Configure CMake Presets for Hexagon NPU & OpenCL
+      - name: Copy CMake User Presets
         run: |
-          # Copy the preset template provided by llama.cpp
           cp docs/backend/snapdragon/CMakeUserPresets.json .
-          
-          # Run the official android snapshot preset targeting Hexagon + OpenCL
+
+      - name: Configure CMake Preset for Android Hexagon & OpenCL
+        run: |
           cmake --preset arm64-android-snapdragon-release -B build-snapdragon \
             -DGGML_HEXAGON=ON \
             -DGGML_OPENCL=ON
@@ -34,7 +35,7 @@ jobs:
         run: |
           cmake --build build-snapdragon --target llama-server -j$(nproc)
 
-      - name: Package Binaries
+      - name: Install / Package Binaries
         run: |
           cmake --install build-snapdragon --prefix pkg-snapdragon
 
