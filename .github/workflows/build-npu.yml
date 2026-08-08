@@ -23,19 +23,23 @@ jobs:
 
       - name: Copy CMake User Presets
         run: |
-          cp docs/backend/snapdragon/CMakeUserPresets.json .
+          # Adjust path based on where llama.cpp is located in your repo structure
+          cp Android/src/llama.cpp/docs/backend/snapdragon/CMakeUserPresets.json Android/src/llama.cpp/
 
       - name: Configure CMake Preset for Android Hexagon & OpenCL
+        working-directory: Android/src/llama.cpp
         run: |
           cmake --preset arm64-android-snapdragon-release -B build-snapdragon \
             -DGGML_HEXAGON=ON \
             -DGGML_OPENCL=ON
 
       - name: Build llama-server
+        working-directory: Android/src/llama.cpp
         run: |
           cmake --build build-snapdragon --target llama-server -j$(nproc)
 
       - name: Install / Package Binaries
+        working-directory: Android/src/llama.cpp
         run: |
           cmake --install build-snapdragon --prefix pkg-snapdragon
 
@@ -43,4 +47,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: snapdragon-npu-llama-server
-          path: pkg-snapdragon/
+          path: Android/src/llama.cpp/pkg-snapdragon/
