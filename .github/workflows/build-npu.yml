@@ -21,6 +21,13 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: Install Node.js and pnpm
+        run: |
+          apt-get update && apt-get install -y curl
+          curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+          apt-get install -y nodejs
+          npm install -g pnpm
+
       # -------------------------------------------------------------
       # 1. CACHE & BUILD LLAMA (Restores instantly on retry)
       # -------------------------------------------------------------
@@ -47,7 +54,7 @@ jobs:
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 2. BUILD STABLE DIFFUSION (With Hexagon SDK, NDK, & Examples Flag)
+      # 2. BUILD STABLE DIFFUSION (With Web UI Enabled)
       # -------------------------------------------------------------
       - name: Restore SD Build Cache
         uses: actions/cache@v4
@@ -61,13 +68,11 @@ jobs:
       - name: Configure and Build Stable Diffusion
         working-directory: Android/src/stable-diffusion.cpp
         run: |
-          # Resolve Android NDK Path
           NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
           if [ -z "$NDK_PATH" ]; then
             NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
           fi
           
-          # Resolve Hexagon SDK Path inside container
           HEX_SDK="${HEXAGON_SDK_ROOT}"
           if [ -z "$HEX_SDK" ]; then
             HEX_SDK=$(find /opt -maxdepth 3 \( -name "*hexagon*" -o -name "*Hexagon*" \) | head -n 1)
