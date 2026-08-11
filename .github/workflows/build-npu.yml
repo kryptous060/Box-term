@@ -21,9 +21,21 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      # 1. Build Llama Engine (Static)
+      # -------------------------------------------------------------
+      # CACHE LLAMA BUILD (Restores instantly if source hasn't changed)
+      # -------------------------------------------------------------
+      - name: Restore Llama Build Cache
+        uses: actions/cache@v4
+        id: cache-llama
+        with:
+          path: Android/src/llama.cpp/build-s
+          key: llama-npu-build-${{ hashFiles('Android/src/llama.cpp/**/*.cpp', 'Android/src/llama.cpp/**/*.h', 'Android/src/llama.cpp/CMakeLists.txt') }}
+          restore-keys: |
+            llama-npu-build-
+
       - name: Configure and Build Llama
         working-directory: Android/src/llama.cpp
+        if: steps.cache-llama.outputs.cache-hit != 'true'
         run: |
           if [ -f docs/backend/snapdragon/CMakeUserPresets.json ]; then
             cp docs/backend/snapdragon/CMakeUserPresets.json ./
@@ -34,11 +46,21 @@ jobs:
             -DBUILD_SHARED_LIBS=OFF
           cmake --build build-s -j$(nproc)
 
-      # 2. Build Stable Diffusion Engine (Static)
+      # -------------------------------------------------------------
+      # CACHE STABLE DIFFUSION BUILD (Saves progress as you tweak it)
+      # -------------------------------------------------------------
+      - name: Restore SD Build Cache
+        uses: actions/cache@v4
+        id: cache-sd
+        with:
+          path: Android/src/stable-diffusion.cpp/build-s
+          key: sd-npu-build-${{ hashFiles('Android/src/stable-diffusion.cpp/**/*.cpp', 'Android/src/stable-diffusion.cpp/**/*.h', 'Android/src/stable-diffusion.cpp/CMakeLists.txt') }}
+          restore-keys: |
+            sd-npu-build-
+
       - name: Configure and Build Stable Diffusion
         working-directory: Android/src/stable-diffusion.cpp
         run: |
-          # Fallback check for Android NDK root path inside container
           NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
           if [ -z "$NDK_PATH" ]; then
             NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
@@ -46,7 +68,6 @@ jobs:
           
           echo "Using Android NDK at: $NDK_PATH"
 
-          # Use Ninja generator which is standard in the android toolchain container
           cmake -B build-s -G "Ninja" \
             -DCMAKE_TOOLCHAIN_FILE="${NDK_PATH}/build/cmake/android.toolchain.cmake" \
             -DANDROID_ABI=arm64-v8a \
@@ -57,12 +78,10 @@ jobs:
             -DGGML_OPENCL=ON
           cmake --build build-s -j$(nproc)
 
-      # 3. Create a Single Dispatcher Wrapper Source
+      # 3. Create Dispatcher & Bundle
       - name: Compile Unified Omnibin Dispatcher
         run: |
           mkdir -p omnibin-build
-          
-          # Write a multi-call binary dispatcher in C
           cat << 'EOF' > omnibin-build/omnibin.c
           #include <stdio.h>
           #include <string.h>
@@ -76,36 +95,21 @@ jobs:
 
           int main(int argc, char **argv) {
               char *progname = basename(argv[0]);
-
-              if (strcmp(progname, "llama-cli") == 0) {
-                  return llama_cli_main(argc, argv);
-              } else if (strcmp(progname, "llama-server") == 0) {
-                  return llama_server_main(argc, argv);
-              } else if (strcmp(progname, "sd-cli") == 0) {
-                  return sd_cli_main(argc, argv);
-              } else if (strcmp(progname, "sd-server") == 0) {
-                  return sd_server_main(argc, argv);
-              }
-
+              if (strcmp(progname, "llama-cli") == 0) return llama_cli_main(argc, argv);
+              if (strcmp(progname, "llama-server") == 0) return llama_server_main(argc, argv);
+              if (strcmp(progname, "sd-cli") == 0) return sd_cli_main(argc, argv);
+              if (strcmp(progname, "sd-server") == 0) return sd_server_main(argc, argv);
+              
               if (argc > 1) {
-                  if (strcmp(argv[1], "llama-cli") == 0) {
-                      return llama_cli_main(argc - 1, argv + 1);
-                  } else if (strcmp(argv[1], "llama-server") == 0) {
-                      return llama_server_main(argc - 1, argv + 1);
-                  } else if (strcmp(argv[1], "sd-cli") == 0) {
-                      return sd_cli_main(argc - 1, argv + 1);
-                  } else if (strcmp(argv[1], "sd-server") == 0) {
-                      return sd_server_main(argc - 1, argv + 1);
-                  }
+                  if (strcmp(argv[1], "llama-cli") == 0) return llama_cli_main(argc - 1, argv + 1);
+                  if (strcmp(argv[1], "llama-server") == 0) return llama_server_main(argc - 1, argv + 1);
+                  if (strcmp(argv[1], "sd-cli") == 0) return sd_cli_main(argc - 1, argv + 1);
+                  if (strcmp(argv[1], "sd-server") == 0) return sd_server_main(argc - 1, argv + 1);
               }
-
               printf("=== Snapdragon NPU AI Suite Omnibin ===\n");
-              printf("Usage: ai-suite [llama-cli|llama-server|sd-cli|sd-server] [args...]\n");
-              printf("Or symlink this binary to any of the tool names.\n");
               return 1;
           }
           EOF
-
           echo "Omnibin scaffold generated."
 
       - name: Upload Single Binary Artifact
