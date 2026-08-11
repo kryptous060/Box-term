@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
 
       # -------------------------------------------------------------
-      # CACHE LLAMA BUILD (Restores instantly if source hasn't changed)
+      # 1. CACHE & BUILD LLAMA (Restores instantly on retry)
       # -------------------------------------------------------------
       - name: Restore Llama Build Cache
         uses: actions/cache@v4
@@ -47,7 +47,7 @@ jobs:
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # CACHE STABLE DIFFUSION BUILD (Saves progress as you tweak it)
+      # 2. BUILD STABLE DIFFUSION (With Hexagon SDK & NDK resolution)
       # -------------------------------------------------------------
       - name: Restore SD Build Cache
         uses: actions/cache@v4
@@ -61,12 +61,23 @@ jobs:
       - name: Configure and Build Stable Diffusion
         working-directory: Android/src/stable-diffusion.cpp
         run: |
+          # Resolve Android NDK Path
           NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
           if [ -z "$NDK_PATH" ]; then
             NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
           fi
           
+          # Resolve Hexagon SDK Path inside container
+          HEX_SDK="${HEXAGON_SDK_ROOT}"
+          if [ -z "$HEX_SDK" ]; then
+            HEX_SDK=$(find /opt -maxdepth 3 \( -name "*hexagon*" -o -name "*Hexagon*" \) | head -n 1)
+          fi
+          if [ -z "$HEX_SDK" ]; then
+            HEX_SDK="/opt/hexagon"
+          fi
+          
           echo "Using Android NDK at: $NDK_PATH"
+          echo "Using Hexagon SDK at: $HEX_SDK"
 
           cmake -B build-s -G "Ninja" \
             -DCMAKE_TOOLCHAIN_FILE="${NDK_PATH}/build/cmake/android.toolchain.cmake" \
@@ -75,13 +86,18 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DSD_BUILD_SHARED_LIBS=OFF \
             -DGGML_HEXAGON=ON \
-            -DGGML_OPENCL=ON
+            -DGGML_OPENCL=ON \
+            -DHEXAGON_SDK_ROOT="${HEX_SDK}"
+            
           cmake --build build-s -j$(nproc)
 
-      # 3. Create Dispatcher & Bundle
+      # -------------------------------------------------------------
+      # 3. COMPILE UNIFIED OMNIBIN DISPATCHER & PACKAGE
+      # -------------------------------------------------------------
       - name: Compile Unified Omnibin Dispatcher
         run: |
           mkdir -p omnibin-build
+          
           cat << 'EOF' > omnibin-build/omnibin.c
           #include <stdio.h>
           #include <string.h>
@@ -95,25 +111,41 @@ jobs:
 
           int main(int argc, char **argv) {
               char *progname = basename(argv[0]);
-              if (strcmp(progname, "llama-cli") == 0) return llama_cli_main(argc, argv);
-              if (strcmp(progname, "llama-server") == 0) return llama_server_main(argc, argv);
-              if (strcmp(progname, "sd-cli") == 0) return sd_cli_main(argc, argv);
-              if (strcmp(progname, "sd-server") == 0) return sd_server_main(argc, argv);
-              
-              if (argc > 1) {
-                  if (strcmp(argv[1], "llama-cli") == 0) return llama_cli_main(argc - 1, argv + 1);
-                  if (strcmp(argv[1], "llama-server") == 0) return llama_server_main(argc - 1, argv + 1);
-                  if (strcmp(argv[1], "sd-cli") == 0) return sd_cli_main(argc - 1, argv + 1);
-                  if (strcmp(argv[1], "sd-server") == 0) return sd_server_main(argc - 1, argv + 1);
+
+              if (strcmp(progname, "llama-cli") == 0) {
+                  return llama_cli_main(argc, argv);
+              } else if (strcmp(progname, "llama-server") == 0) {
+                  return llama_server_main(argc, argv);
+              } else if (strcmp(progname, "sd-cli") == 0) {
+                  return sd_cli_main(argc, argv);
+              } else if (strcmp(progname, "sd-server") == 0) {
+                  return sd_server_main(argc, argv);
               }
+
+              if (argc > 1) {
+                  if (strcmp(argv[1], "llama-cli") == 0) {
+                      return llama_cli_main(argc - 1, argv + 1);
+                  } else if (strcmp(argv[1], "llama-server") == 0) {
+                      return llama_server_main(argc - 1, argv + 1);
+                  } else if (strcmp(argv[1], "sd-cli") == 0) {
+                      return sd_cli_main(argc - 1, argv + 1);
+                  } else if (strcmp(argv[1], "sd-server") == 0) {
+                      return sd_server_main(argc - 1, argv + 1);
+                  }
+              }
+
               printf("=== Snapdragon NPU AI Suite Omnibin ===\n");
+              printf("Usage: ai-suite [llama-cli|llama-server|sd-cli|sd-server] [args...]\n");
+              printf("Or symlink this binary to any of the tool names.\n");
               return 1;
           }
           EOF
-          echo "Omnibin scaffold generated."
+
+          echo "Omnibin scaffold generated successfully."
 
       - name: Upload Single Binary Artifact
         uses: actions/upload-artifact@v4
         with:
           name: snapdragon-omnibin-ai-suite
           path: omnibin-build/
+          
