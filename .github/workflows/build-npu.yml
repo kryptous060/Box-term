@@ -47,7 +47,7 @@ jobs:
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 2. BUILD STABLE DIFFUSION (With Hexagon SDK & NDK resolution)
+      # 2. BUILD STABLE DIFFUSION (With Hexagon SDK, NDK, & Examples Flag)
       # -------------------------------------------------------------
       - name: Restore SD Build Cache
         uses: actions/cache@v4
@@ -87,7 +87,8 @@ jobs:
             -DSD_BUILD_SHARED_LIBS=OFF \
             -DGGML_HEXAGON=ON \
             -DGGML_OPENCL=ON \
-            -DHEXAGON_SDK_ROOT="${HEX_SDK}"
+            -DHEXAGON_SDK_ROOT="${HEX_SDK}" \
+            -DSD_BUILD_EXAMPLES=ON
             
           cmake --build build-s -j$(nproc)
 
