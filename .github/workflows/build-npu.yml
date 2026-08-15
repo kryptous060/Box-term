@@ -59,11 +59,12 @@ jobs:
           '
 
       # -------------------------------------------------------------
-      # 1. PATCH & BUILD LLAMA.CPP
+      # 1. PATCH & BUILD LLAMA.CPP (WITH WEB UI ENABLED)
       # -------------------------------------------------------------
-      - name: Patch and Build Llama.cpp
+      - name: Pre-build Web UI and Build Llama.cpp
         working-directory: Android/src/llama.cpp
         run: |
+          # Patch main entrypoints for omnibin linking
           python3 -c '
           import os
           for root, dirs, files in os.walk("."):
@@ -87,6 +88,14 @@ jobs:
                           pass
           '
 
+          # Build Web UI assets using pnpm prior to CMake generation
+          echo "Building Web UI assets..."
+          find . -name "package.json" -not -path "*/node_modules/*" | while read -r pkg; do
+            dir=$(dirname "$pkg")
+            echo "Installing and building webui in $dir"
+            (cd "$dir" && pnpm install && pnpm run build || true)
+          done
+
           if [ -f docs/backend/snapdragon/CMakeUserPresets.json ]; then
             cp docs/backend/snapdragon/CMakeUserPresets.json ./
           fi
@@ -96,7 +105,8 @@ jobs:
             -DGGML_OPENCL=ON \
             -DBUILD_SHARED_LIBS=OFF \
             -DLLAMA_BUILD_EXAMPLES=ON \
-            -DLLAMA_BUILD_SERVER=ON
+            -DLLAMA_BUILD_SERVER=ON \
+            -DLLAMA_BUILD_SERVER_WEBUI=ON
 
           cmake --build build-s -j$(nproc)
 
@@ -162,7 +172,6 @@ jobs:
         run: |
           mkdir -p omnibin-build
 
-          # Generating the C++ scaffold safely without Bash EOF/Heredocs
           python3 -c '
           code = """#include <stdio.h>
           #include <string.h>
@@ -229,7 +238,6 @@ jobs:
           ALL_LIBS=$(find Android/src/llama.cpp/build-s Android/src/stable-diffusion.cpp/build-s -name "*.a")
           ALL_OBJS=$(find Android/src/llama.cpp/build-s Android/src/stable-diffusion.cpp/build-s -name "*.o")
 
-          # Note: Changed `-log` to `-llog` to correctly link Android's logging library
           $CLANGXX -O3 -fPIE -pie omnibin-build/omnibin.cpp -Wl,--whole-archive $ALL_LIBS -Wl,--no-whole-archive $ALL_OBJS -o omnibin-build/ai-suite -Wl,--allow-multiple-definition -static-libstdc++ -lm -ldl -lpthread -llog -landroid
 
           chmod +x omnibin-build/ai-suite
@@ -246,4 +254,3 @@ jobs:
         with:
           name: snapdragon-omnibin-ai-suite
           path: omnibin-build/
-          
