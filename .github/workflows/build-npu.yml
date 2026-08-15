@@ -62,19 +62,8 @@ jobs:
           '
 
       # -------------------------------------------------------------
-      # 1. PATCH & BUILD LLAMA.CPP
+      # 1. BUILD LLAMA.CPP STATIC LIBRARIES ONLY
       # -------------------------------------------------------------
-      - name: Patch Llama Entrypoints
-        working-directory: Android/src/llama.cpp
-        run: |
-          # Rename main() functions so omnibin dispatcher can invoke them directly
-          find examples/main -name "*.cpp" -exec sed -i 's/int main(/int llama_cli_main(/g' {} +
-          find examples/server -name "*.cpp" -exec sed -i 's/int main(/int llama_server_main(/g' {} +
-          
-          # Append weak main stubs so CMake executable targets complete without linker error
-          echo 'extern "C" int __attribute__((weak)) main(int argc, char** argv) { return 0; }' >> examples/main/main.cpp
-          echo 'extern "C" int __attribute__((weak)) main(int argc, char** argv) { return 0; }' >> examples/server/server.cpp
-
       - name: Restore Llama Build Cache
         uses: actions/cache@v4
         id: cache-llama
@@ -84,7 +73,7 @@ jobs:
           restore-keys: |
             llama-npu-build-
 
-      - name: Configure and Build Llama
+      - name: Configure and Build Llama Libraries
         working-directory: Android/src/llama.cpp
         if: steps.cache-llama.outputs.cache-hit != 'true'
         run: |
@@ -94,28 +83,15 @@ jobs:
           cmake --preset arm64-android-snapdragon-release -B build-s \
             -DGGML_HEXAGON=ON \
             -DGGML_OPENCL=ON \
-            -DBUILD_SHARED_LIBS=OFF
+            -DBUILD_SHARED_LIBS=OFF \
+            -DLLAMA_BUILD_EXAMPLES=OFF \
+            -DLLAMA_BUILD_TESTS=OFF \
+            -DLLAMA_BUILD_SERVER=OFF
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 2. PATCH & BUILD STABLE DIFFUSION
+      # 2. BUILD STABLE DIFFUSION STATIC LIBRARIES ONLY
       # -------------------------------------------------------------
-      - name: Patch Stable Diffusion Entrypoints
-        working-directory: Android/src/stable-diffusion.cpp
-        run: |
-          # Rename main() functions for SD CLI & Server
-          find . -maxdepth 3 -type f -name "main.cpp" -exec sed -i 's/int main(/int sd_cli_main(/g' {} +
-          find examples/server -type f -name "*.cpp" -exec sed -i 's/int main(/int sd_server_main(/g' {} +
-
-          # Append weak main stubs
-          MAIN_FILE=$(find . -maxdepth 3 -type f -name "main.cpp" | head -n 1)
-          if [ -n "$MAIN_FILE" ]; then
-            echo 'extern "C" int __attribute__((weak)) main(int argc, char** argv) { return 0; }' >> "$MAIN_FILE"
-          fi
-          if [ -f examples/server/server.cpp ]; then
-            echo 'extern "C" int __attribute__((weak)) main(int argc, char** argv) { return 0; }' >> examples/server/server.cpp
-          fi
-
       - name: Restore SD Build Cache
         uses: actions/cache@v4
         id: cache-sd
@@ -125,7 +101,7 @@ jobs:
           restore-keys: |
             sd-npu-build-
 
-      - name: Configure and Build Stable Diffusion
+      - name: Configure and Build Stable Diffusion Libraries
         working-directory: Android/src/stable-diffusion.cpp
         run: |
           NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
@@ -140,9 +116,6 @@ jobs:
           if [ -z "$HEX_SDK" ]; then
             HEX_SDK="/opt/hexagon"
           fi
-          
-          echo "Using Android NDK at: $NDK_PATH"
-          echo "Using Hexagon SDK at: $HEX_SDK"
 
           cmake -B build-s -G "Ninja" \
             -DCMAKE_TOOLCHAIN_FILE="${NDK_PATH}/build/cmake/android.toolchain.cmake" \
@@ -153,17 +126,37 @@ jobs:
             -DGGML_HEXAGON=ON \
             -DGGML_OPENCL=ON \
             -DHEXAGON_SDK_ROOT="${HEX_SDK}" \
-            -DSD_BUILD_EXAMPLES=ON
+            -DSD_BUILD_EXAMPLES=OFF
             
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 3. LINK UNIFIED OMNIBIN SUPER BINARY & CREATE SYMLINKS
+      # 3. COMPILE ENTRYPOINTS AND LINK SINGLE OMNIBIN SUPER BINARY
       # -------------------------------------------------------------
       - name: Compile and Link Omnibin Executable
         run: |
           mkdir -p omnibin-build
 
+          # Locate entry point source files dynamically
+          LLAMA_CLI_SRC=$(grep -rl "int main(" Android/src/llama.cpp | grep -E "cli|main" | head -n 1)
+          LLAMA_SERVER_SRC=$(grep -rl "int main(" Android/src/llama.cpp | grep "server" | head -n 1)
+          SD_CLI_SRC=$(grep -rl "int main(" Android/src/stable-diffusion.cpp | grep -E "cli|main" | grep -v "server" | head -n 1)
+          SD_SERVER_SRC=$(grep -rl "int main(" Android/src/stable-diffusion.cpp | grep "server" | head -n 1)
+
+          # Copy and rename main function signatures in localized sources
+          cp "$LLAMA_CLI_SRC" omnibin-build/llama_cli_entry.cpp
+          sed -i 's/int main(/int llama_cli_main(/g' omnibin-build/llama_cli_entry.cpp
+
+          cp "$LLAMA_SERVER_SRC" omnibin-build/llama_server_entry.cpp
+          sed -i 's/int main(/int llama_server_main(/g' omnibin-build/llama_server_entry.cpp
+
+          cp "$SD_CLI_SRC" omnibin-build/sd_cli_entry.cpp
+          sed -i 's/int main(/int sd_cli_main(/g' omnibin-build/sd_cli_entry.cpp
+
+          cp "$SD_SERVER_SRC" omnibin-build/sd_server_entry.cpp
+          sed -i 's/int main(/int sd_server_main(/g' omnibin-build/sd_server_entry.cpp
+
+          # Dispatcher scaffold
           cat << 'EOF' > omnibin-build/omnibin.cpp
           #include <stdio.h>
           #include <string.h>
@@ -216,24 +209,24 @@ jobs:
           fi
           
           CLANGXX=$(find "${NDK_PATH}/toolchains/llvm/prebuilt/linux-x86_64/bin" -name "aarch64-linux-android*-clang++" | sort -V | tail -n 1)
-          echo "Using Clang++ at: $CLANGXX"
 
-          # Gather static libraries and object files
-          LLAMA_LIBS=$(find Android/src/llama.cpp/build-s -name "*.a")
-          LLAMA_OBJS=$(find Android/src/llama.cpp/build-s -name "*.o")
-          
-          SD_LIBS=$(find Android/src/stable-diffusion.cpp/build-s -name "*.a")
-          SD_OBJS=$(find Android/src/stable-diffusion.cpp/build-s -name "*.o")
+          # Gather all compiled static libraries
+          ALL_LIBS=$(find Android/src/llama.cpp/build-s Android/src/stable-diffusion.cpp/build-s -name "*.a")
 
-          # Compile and link into a single executable
+          # Compile dispatcher + entrypoints directly against static libs
           $CLANGXX -O3 -fPIE -pie \
             omnibin-build/omnibin.cpp \
+            omnibin-build/llama_cli_entry.cpp \
+            omnibin-build/llama_server_entry.cpp \
+            omnibin-build/sd_cli_entry.cpp \
+            omnibin-build/sd_server_entry.cpp \
+            -I Android/src/llama.cpp \
+            -I Android/src/llama.cpp/include \
+            -I Android/src/llama.cpp/ggml/include \
+            -I Android/src/stable-diffusion.cpp \
             -Wl,--whole-archive \
-            $LLAMA_LIBS \
-            $SD_LIBS \
+            $ALL_LIBS \
             -Wl,--no-whole-archive \
-            $LLAMA_OBJS \
-            $SD_OBJS \
             -o omnibin-build/ai-suite \
             -Wl,--allow-multiple-definition \
             -static-libstdc++ \
@@ -241,7 +234,7 @@ jobs:
 
           chmod +x omnibin-build/ai-suite
 
-          # Create symlinks
+          # Create symlinks inside build folder
           cd omnibin-build
           ln -sf ai-suite llama-cli
           ln -sf ai-suite llama-server
@@ -249,11 +242,8 @@ jobs:
           ln -sf ai-suite sd-server
           cd ..
 
-          echo "Omnibin binary and symlinks built successfully."
-
       - name: Upload Single Binary Artifact
         uses: actions/upload-artifact@v4
         with:
           name: snapdragon-omnibin-ai-suite
           path: omnibin-build/
-          
