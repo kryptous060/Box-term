@@ -35,28 +35,46 @@ jobs:
         run: |
           python3 -c '
           import re
+
           path = "/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
           try:
               with open(path, "r") as f:
-                  content = f.read()
-              
-              # Add missing output variable to string(FIND) commands if they have only 2 arguments
-              fixed_content = re.sub(
-                  r"string\s*\(\s*FIND\s+([^()\n]+)\s+([^()\n]+)\s*\)", 
-                  r"string(FIND \1 \2 _hex_find_res)", 
-                  content
-              )
-              
+                  lines = f.readlines()
+
+              new_lines = []
+              for line in lines:
+                  if "string" in line and "FIND" in line:
+                      m = re.search(r"string\s*\(\s*FIND\s+(.+)\)", line, re.IGNORECASE)
+                      if m:
+                          raw = m.group(1).strip()
+                          tokens = [t.strip("\"") for t in raw.split()]
+                          if len(tokens) == 2:
+                              line = f"  string(FIND \"{tokens[0]}\" \"{tokens[1]}\" _hex_find_res)\n"
+                          elif len(tokens) >= 3:
+                              line = f"  string(FIND \"{tokens[0]}\" \"{tokens[1]}\" {tokens[-1]})\n"
+                  new_lines.append(line)
+
               with open(path, "w") as f:
-                  f.write(fixed_content)
+                  f.writelines(new_lines)
               print("Successfully patched hexagon_fun.cmake")
           except Exception as e:
               print(f"Skipping patch or file not found: {e}")
           '
 
       # -------------------------------------------------------------
-      # 1. CACHE & BUILD LLAMA (Restores instantly on retry)
+      # 1. PATCH & BUILD LLAMA.CPP
       # -------------------------------------------------------------
+      - name: Patch Llama Entrypoints
+        working-directory: Android/src/llama.cpp
+        run: |
+          # Rename main() functions so omnibin dispatcher can invoke them directly
+          find examples/main -name "*.cpp" -exec sed -i 's/int main(/int llama_cli_main(/g' {} +
+          find examples/server -name "*.cpp" -exec sed -i 's/int main(/int llama_server_main(/g' {} +
+          
+          # Append weak main stubs so CMake executable targets complete without linker error
+          echo 'extern "C" int __attribute__((weak)) main(int argc, char** argv) { return 0; }' >> examples/main/main.cpp
+          echo 'extern "C" int __attribute__((weak)) main(int argc, char** argv) { return 0; }' >> examples/server/server.cpp
+
       - name: Restore Llama Build Cache
         uses: actions/cache@v4
         id: cache-llama
@@ -80,8 +98,24 @@ jobs:
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 2. BUILD STABLE DIFFUSION (With Web UI Enabled)
+      # 2. PATCH & BUILD STABLE DIFFUSION
       # -------------------------------------------------------------
+      - name: Patch Stable Diffusion Entrypoints
+        working-directory: Android/src/stable-diffusion.cpp
+        run: |
+          # Rename main() functions for SD CLI & Server
+          find . -maxdepth 3 -type f -name "main.cpp" -exec sed -i 's/int main(/int sd_cli_main(/g' {} +
+          find examples/server -type f -name "*.cpp" -exec sed -i 's/int main(/int sd_server_main(/g' {} +
+
+          # Append weak main stubs
+          MAIN_FILE=$(find . -maxdepth 3 -type f -name "main.cpp" | head -n 1)
+          if [ -n "$MAIN_FILE" ]; then
+            echo 'extern "C" int __attribute__((weak)) main(int argc, char** argv) { return 0; }' >> "$MAIN_FILE"
+          fi
+          if [ -f examples/server/server.cpp ]; then
+            echo 'extern "C" int __attribute__((weak)) main(int argc, char** argv) { return 0; }' >> examples/server/server.cpp
+          fi
+
       - name: Restore SD Build Cache
         uses: actions/cache@v4
         id: cache-sd
@@ -124,22 +158,24 @@ jobs:
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 3. COMPILE UNIFIED OMNIBIN DISPATCHER & PACKAGE
+      # 3. LINK UNIFIED OMNIBIN SUPER BINARY & CREATE SYMLINKS
       # -------------------------------------------------------------
-      - name: Compile Unified Omnibin Dispatcher
+      - name: Compile and Link Omnibin Executable
         run: |
           mkdir -p omnibin-build
-          
-          cat << 'EOF' > omnibin-build/omnibin.c
+
+          cat << 'EOF' > omnibin-build/omnibin.cpp
           #include <stdio.h>
           #include <string.h>
           #include <unistd.h>
           #include <libgen.h>
 
-          int llama_cli_main(int argc, char **argv);
-          int llama_server_main(int argc, char **argv);
-          int sd_cli_main(int argc, char **argv);
-          int sd_server_main(int argc, char **argv);
+          extern "C" {
+              int llama_cli_main(int argc, char **argv);
+              int llama_server_main(int argc, char **argv);
+              int sd_cli_main(int argc, char **argv);
+              int sd_server_main(int argc, char **argv);
+          }
 
           int main(int argc, char **argv) {
               char *progname = basename(argv[0]);
@@ -148,7 +184,7 @@ jobs:
                   return llama_cli_main(argc, argv);
               } else if (strcmp(progname, "llama-server") == 0) {
                   return llama_server_main(argc, argv);
-              } else if (strcmp(progname, "sd-cli") == 0) {
+              } else if (strcmp(progname, "sd-cli") == 0 || strcmp(progname, "sd") == 0) {
                   return sd_cli_main(argc, argv);
               } else if (strcmp(progname, "sd-server") == 0) {
                   return sd_server_main(argc, argv);
@@ -159,7 +195,7 @@ jobs:
                       return llama_cli_main(argc - 1, argv + 1);
                   } else if (strcmp(argv[1], "llama-server") == 0) {
                       return llama_server_main(argc - 1, argv + 1);
-                  } else if (strcmp(argv[1], "sd-cli") == 0) {
+                  } else if (strcmp(argv[1], "sd-cli") == 0 || strcmp(argv[1], "sd") == 0) {
                       return sd_cli_main(argc - 1, argv + 1);
                   } else if (strcmp(argv[1], "sd-server") == 0) {
                       return sd_server_main(argc - 1, argv + 1);
@@ -173,7 +209,47 @@ jobs:
           }
           EOF
 
-          echo "Omnibin scaffold generated successfully."
+          # Locate NDK clang++ compiler
+          NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
+          if [ -z "$NDK_PATH" ]; then
+            NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
+          fi
+          
+          CLANGXX=$(find "${NDK_PATH}/toolchains/llvm/prebuilt/linux-x86_64/bin" -name "aarch64-linux-android*-clang++" | sort -V | tail -n 1)
+          echo "Using Clang++ at: $CLANGXX"
+
+          # Gather static libraries and object files
+          LLAMA_LIBS=$(find Android/src/llama.cpp/build-s -name "*.a")
+          LLAMA_OBJS=$(find Android/src/llama.cpp/build-s -name "*.o")
+          
+          SD_LIBS=$(find Android/src/stable-diffusion.cpp/build-s -name "*.a")
+          SD_OBJS=$(find Android/src/stable-diffusion.cpp/build-s -name "*.o")
+
+          # Compile and link into a single executable
+          $CLANGXX -O3 -fPIE -pie \
+            omnibin-build/omnibin.cpp \
+            -Wl,--whole-archive \
+            $LLAMA_LIBS \
+            $SD_LIBS \
+            -Wl,--no-whole-archive \
+            $LLAMA_OBJS \
+            $SD_OBJS \
+            -o omnibin-build/ai-suite \
+            -Wl,--allow-multiple-definition \
+            -static-libstdc++ \
+            -lm -ldl -lpthread -log -landroid
+
+          chmod +x omnibin-build/ai-suite
+
+          # Create symlinks
+          cd omnibin-build
+          ln -sf ai-suite llama-cli
+          ln -sf ai-suite llama-server
+          ln -sf ai-suite sd-cli
+          ln -sf ai-suite sd-server
+          cd ..
+
+          echo "Omnibin binary and symlinks built successfully."
 
       - name: Upload Single Binary Artifact
         uses: actions/upload-artifact@v4
