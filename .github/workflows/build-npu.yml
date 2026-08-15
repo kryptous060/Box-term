@@ -29,6 +29,32 @@ jobs:
           npm install -g pnpm
 
       # -------------------------------------------------------------
+      # 0. PATCH HEXAGON SDK FOR MODERN CMAKE COMPATIBILITY
+      # -------------------------------------------------------------
+      - name: Patch Hexagon SDK CMake Files
+        run: |
+          python3 -c '
+          import re
+          path = "/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
+          try:
+              with open(path, "r") as f:
+                  content = f.read()
+              
+              # Add missing output variable to string(FIND) commands if they have only 2 arguments
+              fixed_content = re.sub(
+                  r"string\s*\(\s*FIND\s+([^()\n]+)\s+([^()\n]+)\s*\)", 
+                  r"string(FIND \1 \2 _hex_find_res)", 
+                  content
+              )
+              
+              with open(path, "w") as f:
+                  f.write(fixed_content)
+              print("Successfully patched hexagon_fun.cmake")
+          except Exception as e:
+              print(f"Skipping patch or file not found: {e}")
+          '
+
+      # -------------------------------------------------------------
       # 1. CACHE & BUILD LLAMA (Restores instantly on retry)
       # -------------------------------------------------------------
       - name: Restore Llama Build Cache
@@ -154,3 +180,4 @@ jobs:
         with:
           name: snapdragon-omnibin-ai-suite
           path: omnibin-build/
+          
