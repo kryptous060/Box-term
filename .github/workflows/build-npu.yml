@@ -36,28 +36,28 @@ jobs:
           HEX_FUN_PATH="/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
           if [ -f "$HEX_FUN_PATH" ]; then
             echo "Rewriting outdated string(FIND) calls in $HEX_FUN_PATH..."
-            python3 -c '
-            path = "/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
-            with open(path, "r") as f:
-                content = f.read()
-            
-            # Replace legacy string(FIND <string> <substring>) lacking output var
-            import re
-            # Matches string(FIND arg1 arg2) and appends a dummy output variable _dummy_find_res
-            pattern = re.compile(r"string\(\s*FIND\s+([^\)]+?\s+[^\)]+?)\s*\)", re.IGNORECASE)
-            
-            def repl(match):
-                inner = match.group(1).strip()
-                parts = inner.split()
-                if len(parts) == 2:
-                    return f"string(FIND {parts[0]} {parts[1]} _dummy_find_res)"
-                return match.group(0)
-                
-            new_content = pattern.sub(repl, content)
-            with open(path, "w") as f:
-                f.write(new_content)
-            print("Successfully patched Hexagon SDK string(FIND) syntax.")
-            '
+            python3 - << 'EOF'
+import re
+
+path = "/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
+with open(path, "r") as f:
+    content = f.read()
+
+pattern = re.compile(r"string\(\s*FIND\s+([^\)]+?\s+[^\)]+?)\s*\)", re.IGNORECASE)
+
+def repl(match):
+    inner = match.group(1).strip()
+    parts = inner.split()
+    if len(parts) == 2:
+        return f"string(FIND {parts[0]} {parts[1]} _dummy_find_res)"
+    return match.group(0)
+
+new_content = pattern.sub(repl, content)
+with open(path, "w") as f:
+    f.write(new_content)
+
+print("Successfully patched Hexagon SDK string(FIND) syntax.")
+EOF
           fi
 
       # -------------------------------------------------------------
