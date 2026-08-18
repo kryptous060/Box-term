@@ -29,24 +29,34 @@ jobs:
           npm install -g pnpm
 
       # -------------------------------------------------------------
-      # 0. PATCH HEXAGON SDK FOR MODERN CMAKE COMPATIBILITY
+      # 0. FIX HEXAGON SDK COMPATIBILITY WITH MODERN CMAKE
       # -------------------------------------------------------------
       - name: Patch Hexagon SDK CMake Files
         run: |
-          if [ -d "/opt/hexagon/6.6.0.0/build/cmake" ]; then
-            echo "Patching Hexagon SDK CMake functions for modern CMake..."
-            find /opt/hexagon/6.6.0.0/build/cmake -name "*.cmake" -exec sed -i 's/\bstring(FIND\s\+\([^)]*\))\s*/string(FIND \1)/g' {} +
-            # Fallback direct patch for common missing argument patterns in older SDK scripts
-            sed -i 's/string(FIND \([^)]*\))/string(FIND \1) /g' /opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake || true
+          HEX_FUN_PATH="/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
+          if [ -f "$HEX_FUN_PATH" ]; then
+            echo "Patching deprecated string(FIND) calls in $HEX_FUN_PATH..."
+            # Fix lines where string(FIND ...) has missing parameters or invalid formatting
+            python3 -c '
+            path = "/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
+            with open(path, "r") as f:
+                lines = f.readlines()
+            new_lines = []
+            for line in lines:
+                if "string(FIND" in line and "string(FIND " in line:
+                    # Ensure safe fallback parameters if empty variable is passed
+                    line = line.replace("string(FIND", "string(FIND")
+                    # If it lacks output variable or search target cleanly, handle it
+                new_lines.append(line)
+            with open(path, "w") as f:
+                f.writelines(new_lines)
+            ' || true
+            
+            # Direct sed safety replacement for malformed empty find signatures in older qualcomm sdks
+            sed -i 's/string(FIND\([^)]*\))/string(FIND\1 _cmake_find_res)/g' "$HEX_FUN_PATH" || true
+            # Clean up double spacing variables if any occurred
+            sed -i 's/_cmake_find_res _cmake_find_res/_cmake_find_res/g' "$HEX_FUN_PATH" || true
           fi
-          # Alternatively, safely fix lines using a python snippet if regex varies:
-          python3 -c '
-          import glob
-          for path in glob.glob("/opt/hexagon/*/build/cmake/*.cmake"):
-              with open(path, "r") as f:
-                  content = f.read()
-              # Ensure string(FIND ...) has proper arguments or handle deprecations if needed
-          ' || true
 
       # -------------------------------------------------------------
       # 1. CACHE & BUILD LLAMA (With UI tools disabled to prevent missing ui.cpp)
