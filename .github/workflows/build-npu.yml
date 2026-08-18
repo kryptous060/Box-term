@@ -29,37 +29,39 @@ jobs:
           npm install -g pnpm
 
       # -------------------------------------------------------------
-      # 0. FIX HEXAGON SDK COMPATIBILITY WITH MODERN CMAKE
+      # 0. ROBUSTLY PATCH HEXAGON SDK SCRIPT FOR MODERN CMAKE
       # -------------------------------------------------------------
       - name: Patch Hexagon SDK CMake Files
         run: |
           HEX_FUN_PATH="/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
           if [ -f "$HEX_FUN_PATH" ]; then
-            echo "Patching deprecated string(FIND) calls in $HEX_FUN_PATH..."
-            # Fix lines where string(FIND ...) has missing parameters or invalid formatting
+            echo "Rewriting outdated string(FIND) calls in $HEX_FUN_PATH..."
             python3 -c '
             path = "/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
             with open(path, "r") as f:
-                lines = f.readlines()
-            new_lines = []
-            for line in lines:
-                if "string(FIND" in line and "string(FIND " in line:
-                    # Ensure safe fallback parameters if empty variable is passed
-                    line = line.replace("string(FIND", "string(FIND")
-                    # If it lacks output variable or search target cleanly, handle it
-                new_lines.append(line)
-            with open(path, "w") as f:
-                f.writelines(new_lines)
-            ' || true
+                content = f.read()
             
-            # Direct sed safety replacement for malformed empty find signatures in older qualcomm sdks
-            sed -i 's/string(FIND\([^)]*\))/string(FIND\1 _cmake_find_res)/g' "$HEX_FUN_PATH" || true
-            # Clean up double spacing variables if any occurred
-            sed -i 's/_cmake_find_res _cmake_find_res/_cmake_find_res/g' "$HEX_FUN_PATH" || true
+            # Replace legacy string(FIND <string> <substring>) lacking output var
+            import re
+            # Matches string(FIND arg1 arg2) and appends a dummy output variable _dummy_find_res
+            pattern = re.compile(r"string\(\s*FIND\s+([^\)]+?\s+[^\)]+?)\s*\)", re.IGNORECASE)
+            
+            def repl(match):
+                inner = match.group(1).strip()
+                parts = inner.split()
+                if len(parts) == 2:
+                    return f"string(FIND {parts[0]} {parts[1]} _dummy_find_res)"
+                return match.group(0)
+                
+            new_content = pattern.sub(repl, content)
+            with open(path, "w") as f:
+                f.write(new_content)
+            print("Successfully patched Hexagon SDK string(FIND) syntax.")
+            '
           fi
 
       # -------------------------------------------------------------
-      # 1. CACHE & BUILD LLAMA (With UI tools disabled to prevent missing ui.cpp)
+      # 1. CACHE & BUILD LLAMA (With UI tools disabled)
       # -------------------------------------------------------------
       - name: Restore Llama Build Cache
         uses: actions/cache@v4
