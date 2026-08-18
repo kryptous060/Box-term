@@ -29,28 +29,26 @@ jobs:
           npm install -g pnpm
 
       # -------------------------------------------------------------
-      # 0. ROBUSTLY PATCH HEXAGON SDK SCRIPT FOR MODERN CMAKE
+      # 0. ROBUSTLY PATCH HEXAGON SDK UNQUOTED VARIABLES
       # -------------------------------------------------------------
       - name: Patch Hexagon SDK CMake Files
         run: |
           HEX_FUN_PATH="/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
           if [ -f "$HEX_FUN_PATH" ]; then
-            echo "Patching outdated string(FIND) calls in $HEX_FUN_PATH..."
-            python3 -c "
-          import re
-          path = '/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake'
-          try:
-              with open(path, 'r') as f:
-                  data = f.read()
-              # Match string(FIND ...) with exactly 2 arguments to append missing 3rd argument
-              pattern = re.compile(r'string\s*\(\s*FIND\s+((?:\"[^\"]*\"|\S+)\s+(?:\"[^\"]*\"|\S+))\s*\)', re.IGNORECASE)
-              data = pattern.sub(r'string(FIND \1 _hexagon_out_var)', data)
-              with open(path, 'w') as f:
-                  f.write(data)
-              print('Patch applied successfully.')
-          except Exception as e:
-              print(f'Error patching: {e}')
-          "
+            echo "Patching unquoted variables in $HEX_FUN_PATH..."
+            
+            # Generating Python script line-by-line to avoid all YAML/Heredoc syntax traps
+            echo 'import re' > patch.py
+            echo 'path = "/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"' >> patch.py
+            echo 'with open(path, "r") as f: data = f.read()' >> patch.py
+            echo 'def repl(m):' >> patch.py
+            echo '    # Safely wrap unquoted ${VAR} into "${VAR}"' >> patch.py
+            echo '    return re.sub(r"(?<!\")\$\{([^\}]+)\}(?!\")", r"\"${\1}\"", m.group(0))' >> patch.py
+            echo 'data = re.sub(r"string\s*\(\s*FIND[^)]+\)", repl, data)' >> patch.py
+            echo 'with open(path, "w") as f: f.write(data)' >> patch.py
+            
+            python3 patch.py
+            echo "Successfully patched unquoted CMake variables in Hexagon SDK."
           fi
 
       # -------------------------------------------------------------
