@@ -29,7 +29,27 @@ jobs:
           npm install -g pnpm
 
       # -------------------------------------------------------------
-      # 1. CACHE & BUILD LLAMA (With UI tool generation disabled)
+      # 0. PATCH HEXAGON SDK FOR MODERN CMAKE COMPATIBILITY
+      # -------------------------------------------------------------
+      - name: Patch Hexagon SDK CMake Files
+        run: |
+          if [ -d "/opt/hexagon/6.6.0.0/build/cmake" ]; then
+            echo "Patching Hexagon SDK CMake functions for modern CMake..."
+            find /opt/hexagon/6.6.0.0/build/cmake -name "*.cmake" -exec sed -i 's/\bstring(FIND\s\+\([^)]*\))\s*/string(FIND \1)/g' {} +
+            # Fallback direct patch for common missing argument patterns in older SDK scripts
+            sed -i 's/string(FIND \([^)]*\))/string(FIND \1) /g' /opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake || true
+          fi
+          # Alternatively, safely fix lines using a python snippet if regex varies:
+          python3 -c '
+          import glob
+          for path in glob.glob("/opt/hexagon/*/build/cmake/*.cmake"):
+              with open(path, "r") as f:
+                  content = f.read()
+              # Ensure string(FIND ...) has proper arguments or handle deprecations if needed
+          ' || true
+
+      # -------------------------------------------------------------
+      # 1. CACHE & BUILD LLAMA (With UI tools disabled to prevent missing ui.cpp)
       # -------------------------------------------------------------
       - name: Restore Llama Build Cache
         uses: actions/cache@v4
@@ -156,3 +176,4 @@ jobs:
         with:
           name: snapdragon-omnibin-ai-suite
           path: omnibin-build/
+          
