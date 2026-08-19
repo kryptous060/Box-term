@@ -145,15 +145,43 @@ jobs:
       - name: Package Standalone Binaries with Embedded DSP Libraries
         run: |
           mkdir -p omnibin-build/.bin
+
+          echo "=== DEBUG: Listing build-s contents to locate binaries ==="
+          find Android/src/llama.cpp/build-s -maxdepth 3
+          find Android/src/stable-diffusion.cpp/build-s -maxdepth 3
+
+          echo "Using robust Python script to collect and map compiled binaries..."
+          cat << 'EOF' > collect_bins.py
+          import os
+          import shutil
+          import glob
+
+          os.makedirs("omnibin-build/.bin", exist_ok=True)
+
+          # Search helper
+          def find_and_copy(search_root, keywords, target_name):
+              found = False
+              for root, dirs, files in os.walk(search_root):
+                  for file in files:
+                      # Check if any keyword matches the file name without extension
+                      if any(kw == file or kw == file.removesuffix(".exe") for kw in keywords):
+                          src_path = os.path.join(root, file)
+                          dst_path = os.path.join("omnibin-build/.bin", f"{target_name}.real")
+                          shutil.copy2(src_path, dst_path)
+                          os.chmod(dst_path, 0o755)
+                          print(f"SUCCESS: Copied {src_path} -> {dst_path}")
+                          found = True
           
-          echo "Locating and copying compiled engine binaries recursively..."
-          # Recursively find and copy llama binaries
-          find Android/src/llama.cpp/build-s -type f -executable -name "llama-cli" -exec cp {} omnibin-build/.bin/llama-cli.real \;
-          find Android/src/llama.cpp/build-s -type f -executable -name "llama-server" -exec cp {} omnibin-build/.bin/llama-server.real \;
-          
-          # Recursively find and copy stable diffusion binaries (handling 'sd' or 'sd-cli')
-          find Android/src/stable-diffusion.cpp/build-s -type f -executable \( -name "sd" -o -name "sd-cli" \) -exec cp {} omnibin-build/.bin/sd-cli.real \;
-          find Android/src/stable-diffusion.cpp/build-s -type f -executable -name "sd-server" -exec cp {} omnibin-build/.bin/sd-server.real \;
+          # Llama binaries
+          find_and_copy("Android/src/llama.cpp/build-s", ["llama-cli"], "llama-cli")
+          find_and_copy("Android/src/llama.cpp/build-s", ["llama-server"], "llama-server")
+
+          # Stable Diffusion binaries (handles 'sd' or 'sd-cli' or 'sd-server')
+          find_and_copy("Android/src/stable-diffusion.cpp/build-s", ["sd", "sd-cli"], "sd-cli")
+          find_and_copy("Android/src/stable-diffusion.cpp/build-s", ["sd-server"], "sd-server")
+          EOF
+          python3 collect_bins.py
+          rm collect_bins.py
 
           echo "Converting Hexagon DSP library to C header..."
           cat << 'EOF' > make_header.py
@@ -246,9 +274,9 @@ jobs:
           rm -f wrapper.c embedded_libs.h
           cd ..
 
-          echo "Verification of packaged output:"
-          ls -la omnibin-build/
-          ls -la omnibin-build/.bin/
+          echo "Verification of packaged output (should be large now):"
+          ls -lh omnibin-build/
+          ls -lh omnibin-build/.bin/
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
