@@ -50,7 +50,7 @@ jobs:
           fi
 
       # -------------------------------------------------------------
-      # 1. BUILD STATIC OPENMP (libomp.a) FOR ANDROID ARM64
+      # 1. BUILD STATIC OPENMP (libomp.a) VIA MODERN LLVM RUNTIMES
       # -------------------------------------------------------------
       - name: Build Static OpenMP Runtime
         run: |
@@ -59,24 +59,27 @@ jobs:
             NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
           fi
 
-          echo "Cloning LLVM OpenMP source..."
+          echo "Cloning LLVM Runtimes & OpenMP source..."
           git clone --depth 1 --filter=blob:none --sparse https://github.com/llvm/llvm-project.git llvm-project-src
           cd llvm-project-src
-          git sparse-checkout set openmp
+          git sparse-checkout set runtimes openmp cmake llvm/cmake
           cd ..
 
-          echo "Compiling static libomp.a..."
-          cmake -B openmp-build -S llvm-project-src/openmp -G "Ninja" \
+          echo "Compiling static libomp.a via LLVM runtimes framework..."
+          cmake -B openmp-build -S llvm-project-src/runtimes -G "Ninja" \
             -DCMAKE_TOOLCHAIN_FILE="${NDK_PATH}/build/cmake/android.toolchain.cmake" \
             -DANDROID_ABI=arm64-v8a \
             -DANDROID_PLATFORM=android-28 \
             -DCMAKE_BUILD_TYPE=Release \
+            -DLLVM_ENABLE_RUNTIMES=openmp \
             -DLIBOMP_ENABLE_SHARED=OFF \
             -DLIBOMP_HAVE_WEAK_ATTRIBUTE=FALSE \
             -DLIBOMP_HAVE_PSAPI=FALSE
 
           cmake --build openmp-build -j$(nproc)
-          echo "Static OpenMP library successfully compiled at $(pwd)/openmp-build/runtime/src/libomp.a"
+          
+          LIBOMP_PATH=$(find openmp-build -name "libomp.a" | head -n 1)
+          echo "Static OpenMP library successfully compiled at: ${LIBOMP_PATH}"
 
       # -------------------------------------------------------------
       # 2. CACHE & BUILD LLAMA (Statically Linked to libomp.a)
@@ -97,7 +100,7 @@ jobs:
           if [ -f docs/backend/snapdragon/CMakeUserPresets.json ]; then
             cp docs/backend/snapdragon/CMakeUserPresets.json ./
           }
-          LIBOMP_PATH="${GITHUB_WORKSPACE}/openmp-build/runtime/src/libomp.a"
+          LIBOMP_PATH=$(find "${GITHUB_WORKSPACE}/openmp-build" -name "libomp.a" | head -n 1)
           
           cmake --preset arm64-android-snapdragon-release -B build-s \
             -DGGML_HEXAGON=ON \
@@ -138,7 +141,7 @@ jobs:
             HEX_SDK="/opt/hexagon"
           fi
           
-          LIBOMP_PATH="${GITHUB_WORKSPACE}/openmp-build/runtime/src/libomp.a"
+          LIBOMP_PATH=$(find "${GITHUB_WORKSPACE}/openmp-build" -name "libomp.a" | head -n 1)
           
           echo "Using Android NDK at: $NDK_PATH"
           echo "Using Hexagon SDK at: $HEX_SDK"
@@ -160,7 +163,7 @@ jobs:
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 4. COMPILE UNIFIED OMNIBIN DISPATCHER & PACKAGE (No Libs Folder)
+      # 4. COMPILE UNIFIED OMNIBIN DISPATCHER & PACKAGE (Self-Contained)
       # -------------------------------------------------------------
       - name: Compile Unified Omnibin Dispatcher and Package
         run: |
@@ -217,7 +220,6 @@ jobs:
           }
           EOF
 
-          echo "Finding Android NDK for ARM64 Cross-Compilation..."
           NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
           if [ -z "$NDK_PATH" ]; then
             NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
