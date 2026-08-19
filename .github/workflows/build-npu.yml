@@ -1,4 +1,4 @@
-name: Build Four Standalone NPU Binaries (Zero-Lib Clean Root)
+name: Build Four Standalone NPU/Vulkan Binaries (Zero-Lib Clean Root)
 
 on:
   push:
@@ -85,7 +85,7 @@ jobs:
           cmake --build openmp-build -j$(nproc)
 
       # -------------------------------------------------------------
-      # 2. BUILD LLAMA.CPP
+      # 2. BUILD LLAMA.CPP (Retains Hexagon NPU Support)
       # -------------------------------------------------------------
       - name: Configure and Build Llama
         working-directory: Android/src/llama.cpp
@@ -111,7 +111,7 @@ jobs:
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 3. BUILD STABLE-DIFFUSION.CPP
+      # 3. BUILD STABLE-DIFFUSION.CPP (Switched to Vulkan Backend)
       # -------------------------------------------------------------
       - name: Configure and Build Stable Diffusion
         working-directory: Android/src/stable-diffusion.cpp
@@ -121,7 +121,6 @@ jobs:
             NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
           fi
           
-          HEX_SDK="${HEXAGON_SDK_ROOT:-/opt/hexagon}"
           LIBOMP_PATH=$(find "${GITHUB_WORKSPACE}/openmp-build" -name "libomp.a" | head -n 1)
 
           cmake -B build-s -G "Ninja" \
@@ -130,9 +129,7 @@ jobs:
             -DANDROID_PLATFORM=android-28 \
             -DCMAKE_BUILD_TYPE=Release \
             -DSD_BUILD_SHARED_LIBS=OFF \
-            -DGGML_HEXAGON=ON \
-            -DGGML_OPENCL=ON \
-            -DHEXAGON_SDK_ROOT="${HEX_SDK}" \
+            -DSD_VULKAN=ON \
             -DSD_BUILD_EXAMPLES=ON \
             -DOpenMP_C_LIB_NAMES=omp \
             -DOpenMP_CXX_LIB_NAMES=omp \
@@ -145,28 +142,21 @@ jobs:
       # -------------------------------------------------------------
       - name: Package Standalone Binaries
         run: |
-          # Use a VISIBLE directory to prevent artifact uploaders from ignoring it
           mkdir -p omnibin-build/real_bins
 
-          echo "Finding and copying actual binaries (ignoring host permissions, resolving symlinks)..."
-          
-          # 1. Llama CLI (Checks for 'llama-cli' or legacy 'main')
+          echo "Finding and copying actual binaries..."
           LLAMA_CLI=$(find Android/src/llama.cpp/build-s -type f \( -name "llama-cli" -o -name "main" \) | head -n 1)
-          if [ -n "$LLAMA_CLI" ]; then cp -L "$LLAMA_CLI" omnibin-build/real_bins/llama-cli.real; echo "Copied Llama CLI"; fi
+          if [ -n "$LLAMA_CLI" ]; then cp -L "$LLAMA_CLI" omnibin-build/real_bins/llama-cli.real; fi
 
-          # 2. Llama Server (Checks for 'llama-server' or legacy 'server')
           LLAMA_SRV=$(find Android/src/llama.cpp/build-s -type f \( -name "llama-server" -o -name "server" \) | head -n 1)
-          if [ -n "$LLAMA_SRV" ]; then cp -L "$LLAMA_SRV" omnibin-build/real_bins/llama-server.real; echo "Copied Llama Server"; fi
+          if [ -n "$LLAMA_SRV" ]; then cp -L "$LLAMA_SRV" omnibin-build/real_bins/llama-server.real; fi
 
-          # 3. Stable Diffusion CLI (Checks for 'sd', 'sd-cli', or 'main')
           SD_CLI=$(find Android/src/stable-diffusion.cpp/build-s -type f \( -name "sd" -o -name "sd-cli" -o -name "main" \) | grep -v "server" | head -n 1)
-          if [ -n "$SD_CLI" ]; then cp -L "$SD_CLI" omnibin-build/real_bins/sd-cli.real; echo "Copied SD CLI"; fi
+          if [ -n "$SD_CLI" ]; then cp -L "$SD_CLI" omnibin-build/real_bins/sd-cli.real; fi
 
-          # 4. Stable Diffusion Server
           SD_SRV=$(find Android/src/stable-diffusion.cpp/build-s -type f -name "sd-server" | head -n 1)
-          if [ -n "$SD_SRV" ]; then cp -L "$SD_SRV" omnibin-build/real_bins/sd-server.real; echo "Copied SD Server"; fi
+          if [ -n "$SD_SRV" ]; then cp -L "$SD_SRV" omnibin-build/real_bins/sd-server.real; fi
 
-          # Ensure they are marked executable for the target device
           chmod +x omnibin-build/real_bins/*.real
 
           echo "Converting Hexagon DSP library to C header..."
@@ -235,7 +225,6 @@ jobs:
               if (len != -1) {
                   exe_path[len] = '\0';
                   char *dir = dirname(exe_path);
-                  // UPDATED to point to the non-hidden real_bins folder
                   snprintf(target_path, sizeof(target_path), "%s/real_bins/%s.real", dir, TARGET_NAME);
                   execv(target_path, argv);
               }
@@ -260,10 +249,6 @@ jobs:
           
           rm -f wrapper.c embedded_libs.h
           cd ..
-
-          echo "Verification of packaged output (should be large now):"
-          ls -lh omnibin-build/
-          ls -lh omnibin-build/real_bins/
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
