@@ -29,7 +29,7 @@ jobs:
           npm install -g pnpm
 
       # -------------------------------------------------------------
-      # 0. PATCH HEXAGON SDK UNQUOTED VARIABLES
+      # 0. SAFE PATCH FOR HEXAGON SDK UNQUOTED VARIABLES
       # -------------------------------------------------------------
       - name: Patch Hexagon SDK CMake Files
         run: |
@@ -39,14 +39,18 @@ jobs:
           import re
           path = "/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
           with open(path, "r") as f:
-              data = f.read()
-          data = re.sub(
-              r"string\s*\(\s*FIND[^)]+\)",
-              lambda m: re.sub(r"(?<!\${)([a-zA-Z0-9_]+)(?![\}])", r"\"\1\"", m.group(0)),
-              data
-          )
+              lines = f.readlines()
+
+          new_lines = []
+          for line in lines:
+              if "string(" in line or "string (" in line:
+                  # Safely quote unquoted variables inside string() commands without touching command names
+                  line = re.sub(r'(?<!")(\$\{[A-Za-z0-9_]+\})(?!")', r'"\1"', line)
+              new_lines.append(line)
+
           with open(path, "w") as f:
-              f.write(data)
+              f.writelines(new_lines)
+          print("Successfully patched hexagon_fun.cmake safely.")
           EOF
             python3 patch_sdk.py
             rm patch_sdk.py
