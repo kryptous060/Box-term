@@ -104,6 +104,7 @@ jobs:
             -DBUILD_SHARED_LIBS=OFF \
             -DLLAMA_BUILD_TESTS=OFF \
             -DLLAMA_BUILD_EXAMPLES=ON \
+            -DLLAMA_BUILD_SERVER=ON \
             -DOpenMP_C_LIB_NAMES=omp \
             -DOpenMP_CXX_LIB_NAMES=omp \
             -DOpenMP_omp_LIBRARY="${LIBOMP_PATH}"
@@ -140,48 +141,33 @@ jobs:
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 4. PACKAGE INTO STANDALONE BINARIES WITH EMBEDDED DSP LIBS
+      # 4. PACKAGE INTO STANDALONE BINARIES
       # -------------------------------------------------------------
-      - name: Package Standalone Binaries with Embedded DSP Libraries
+      - name: Package Standalone Binaries
         run: |
-          mkdir -p omnibin-build/.bin
+          # Use a VISIBLE directory to prevent artifact uploaders from ignoring it
+          mkdir -p omnibin-build/real_bins
 
-          echo "=== DEBUG: Listing build-s contents to locate binaries ==="
-          find Android/src/llama.cpp/build-s -maxdepth 3
-          find Android/src/stable-diffusion.cpp/build-s -maxdepth 3
-
-          echo "Using robust Python script to collect and map compiled binaries..."
-          cat << 'EOF' > collect_bins.py
-          import os
-          import shutil
-          import glob
-
-          os.makedirs("omnibin-build/.bin", exist_ok=True)
-
-          # Search helper
-          def find_and_copy(search_root, keywords, target_name):
-              found = False
-              for root, dirs, files in os.walk(search_root):
-                  for file in files:
-                      # Check if any keyword matches the file name without extension
-                      if any(kw == file or kw == file.removesuffix(".exe") for kw in keywords):
-                          src_path = os.path.join(root, file)
-                          dst_path = os.path.join("omnibin-build/.bin", f"{target_name}.real")
-                          shutil.copy2(src_path, dst_path)
-                          os.chmod(dst_path, 0o755)
-                          print(f"SUCCESS: Copied {src_path} -> {dst_path}")
-                          found = True
+          echo "Finding and copying actual binaries (ignoring host permissions, resolving symlinks)..."
           
-          # Llama binaries
-          find_and_copy("Android/src/llama.cpp/build-s", ["llama-cli"], "llama-cli")
-          find_and_copy("Android/src/llama.cpp/build-s", ["llama-server"], "llama-server")
+          # 1. Llama CLI (Checks for 'llama-cli' or legacy 'main')
+          LLAMA_CLI=$(find Android/src/llama.cpp/build-s -type f \( -name "llama-cli" -o -name "main" \) | head -n 1)
+          if [ -n "$LLAMA_CLI" ]; then cp -L "$LLAMA_CLI" omnibin-build/real_bins/llama-cli.real; echo "Copied Llama CLI"; fi
 
-          # Stable Diffusion binaries (handles 'sd' or 'sd-cli' or 'sd-server')
-          find_and_copy("Android/src/stable-diffusion.cpp/build-s", ["sd", "sd-cli"], "sd-cli")
-          find_and_copy("Android/src/stable-diffusion.cpp/build-s", ["sd-server"], "sd-server")
-          EOF
-          python3 collect_bins.py
-          rm collect_bins.py
+          # 2. Llama Server (Checks for 'llama-server' or legacy 'server')
+          LLAMA_SRV=$(find Android/src/llama.cpp/build-s -type f \( -name "llama-server" -o -name "server" \) | head -n 1)
+          if [ -n "$LLAMA_SRV" ]; then cp -L "$LLAMA_SRV" omnibin-build/real_bins/llama-server.real; echo "Copied Llama Server"; fi
+
+          # 3. Stable Diffusion CLI (Checks for 'sd', 'sd-cli', or 'main')
+          SD_CLI=$(find Android/src/stable-diffusion.cpp/build-s -type f \( -name "sd" -o -name "sd-cli" -o -name "main" \) | grep -v "server" | head -n 1)
+          if [ -n "$SD_CLI" ]; then cp -L "$SD_CLI" omnibin-build/real_bins/sd-cli.real; echo "Copied SD CLI"; fi
+
+          # 4. Stable Diffusion Server
+          SD_SRV=$(find Android/src/stable-diffusion.cpp/build-s -type f -name "sd-server" | head -n 1)
+          if [ -n "$SD_SRV" ]; then cp -L "$SD_SRV" omnibin-build/real_bins/sd-server.real; echo "Copied SD Server"; fi
+
+          # Ensure they are marked executable for the target device
+          chmod +x omnibin-build/real_bins/*.real
 
           echo "Converting Hexagon DSP library to C header..."
           cat << 'EOF' > make_header.py
@@ -249,7 +235,8 @@ jobs:
               if (len != -1) {
                   exe_path[len] = '\0';
                   char *dir = dirname(exe_path);
-                  snprintf(target_path, sizeof(target_path), "%s/.bin/%s.real", dir, TARGET_NAME);
+                  // UPDATED to point to the non-hidden real_bins folder
+                  snprintf(target_path, sizeof(target_path), "%s/real_bins/%s.real", dir, TARGET_NAME);
                   execv(target_path, argv);
               }
               perror("Failed to launch binary");
@@ -260,9 +247,9 @@ jobs:
           NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
           CLANG_BIN=$(find "$NDK_PATH/toolchains/llvm/prebuilt" -name "aarch64-linux-android*-clang" | head -n 1)
 
-          echo "Dynamically compiling wrappers for all found binaries..."
+          echo "Dynamically compiling wrappers..."
           cd omnibin-build
-          for real_file in .bin/*.real; do
+          for real_file in real_bins/*.real; do
               if [ -f "$real_file" ]; then
                   filename=$(basename "$real_file")
                   target_name="${filename%.real}"
@@ -276,7 +263,7 @@ jobs:
 
           echo "Verification of packaged output (should be large now):"
           ls -lh omnibin-build/
-          ls -lh omnibin-build/.bin/
+          ls -lh omnibin-build/real_bins/
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
