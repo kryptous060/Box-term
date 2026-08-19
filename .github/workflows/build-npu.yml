@@ -44,7 +44,6 @@ jobs:
           new_lines = []
           for line in lines:
               if "string(" in line or "string (" in line:
-                  # Safely quote unquoted variables inside string() commands without touching command names
                   line = re.sub(r'(?<!")(\$\{[A-Za-z0-9_]+\})(?!")', r'"\1"', line)
               new_lines.append(line)
 
@@ -141,16 +140,19 @@ jobs:
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 4. PACKAGE INTO 4 CLEAN STANDALONE BINARIES
+      # 4. PACKAGE INTO STANDALONE BINARIES WITH EMBEDDED DSP LIBS
       # -------------------------------------------------------------
       - name: Package Standalone Binaries with Embedded DSP Libraries
         run: |
           mkdir -p omnibin-build/.bin
           
-          echo "Moving real compiled binaries..."
+          echo "Locating and copying compiled engine binaries recursively..."
+          # Recursively find and copy llama binaries
           find Android/src/llama.cpp/build-s -type f -executable -name "llama-cli" -exec cp {} omnibin-build/.bin/llama-cli.real \;
           find Android/src/llama.cpp/build-s -type f -executable -name "llama-server" -exec cp {} omnibin-build/.bin/llama-server.real \;
-          find Android/src/stable-diffusion.cpp/build-s -type f -executable -name "sd" -exec cp {} omnibin-build/.bin/sd-cli.real \;
+          
+          # Recursively find and copy stable diffusion binaries (handling 'sd' or 'sd-cli')
+          find Android/src/stable-diffusion.cpp/build-s -type f -executable \( -name "sd" -o -name "sd-cli" \) -exec cp {} omnibin-build/.bin/sd-cli.real \;
           find Android/src/stable-diffusion.cpp/build-s -type f -executable -name "sd-server" -exec cp {} omnibin-build/.bin/sd-server.real \;
 
           echo "Converting Hexagon DSP library to C header..."
@@ -230,14 +232,23 @@ jobs:
           NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
           CLANG_BIN=$(find "$NDK_PATH/toolchains/llvm/prebuilt" -name "aarch64-linux-android*-clang" | head -n 1)
 
-          echo "Compiling the 4 standalone wrappers..."
+          echo "Dynamically compiling wrappers for all found binaries..."
           cd omnibin-build
-          for name in llama-cli llama-server sd-cli sd-server; do
-              $CLANG_BIN wrapper.c -DTARGET_NAME=\"$name\" -o $name -fPIE -pie
+          for real_file in .bin/*.real; do
+              if [ -f "$real_file" ]; then
+                  filename=$(basename "$real_file")
+                  target_name="${filename%.real}"
+                  echo "Building wrapper for: $target_name"
+                  $CLANG_BIN wrapper.c -DTARGET_NAME=\"$target_name\" -o "$target_name" -fPIE -pie
+              fi
           done
           
           rm -f wrapper.c embedded_libs.h
           cd ..
+
+          echo "Verification of packaged output:"
+          ls -la omnibin-build/
+          ls -la omnibin-build/.bin/
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
