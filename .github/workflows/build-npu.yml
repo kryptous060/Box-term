@@ -121,17 +121,33 @@ jobs:
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 3. COMPILE UNIFIED OMNIBIN DISPATCHER & PACKAGE
+      # 3. COMPILE UNIFIED OMNIBIN DISPATCHER & PACKAGE WITH LIBS
       # -------------------------------------------------------------
-      - name: Compile Unified Omnibin Dispatcher and Package
+      - name: Compile Unified Omnibin Dispatcher and Package with Dependencies
         run: |
-          mkdir -p omnibin-build/bin
+          mkdir -p omnibin-build/bin omnibin-build/lib
           
           echo "Gathering compiled AI binaries..."
           find Android/src/llama.cpp/build-s -type f -executable -name "llama-cli" -exec cp {} omnibin-build/bin/ \;
           find Android/src/llama.cpp/build-s -type f -executable -name "llama-server" -exec cp {} omnibin-build/bin/ \;
           find Android/src/stable-diffusion.cpp/build-s -type f -executable -name "sd" -exec cp {} omnibin-build/bin/sd-cli \;
           find Android/src/stable-diffusion.cpp/build-s -type f -executable -name "sd-server" -exec cp {} omnibin-build/bin/ \;
+
+          echo "Locating Android NDK for library bundling and compilation..."
+          NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
+          if [ -z "$NDK_PATH" ]; then
+            NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
+          fi
+
+          echo "Bundling required runtime library (libomp.so)..."
+          LIBOMP_PATH=$(find "$NDK_PATH/toolchains/llvm/prebuilt" -name "libomp.so" | grep "aarch64" | head -n 1)
+          if [ -n "$LIBOMP_PATH" ]; then
+            cp "$LIBOMP_PATH" omnibin-build/lib/
+            echo "Successfully bundled libomp.so from $LIBOMP_PATH"
+          else
+            echo "Searching fallback paths for libomp.so..."
+            find /opt -name "libomp.so" -exec cp {} omnibin-build/lib/ \;
+          fi
 
           echo "Generating BusyBox-style NPU dispatcher..."
           cat << 'EOF' > omnibin-build/omnibin.c
@@ -178,12 +194,6 @@ jobs:
           }
           EOF
 
-          echo "Finding Android NDK for ARM64 Cross-Compilation..."
-          NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
-          if [ -z "$NDK_PATH" ]; then
-            NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
-          fi
-          
           CLANG_BIN=$(find "$NDK_PATH/toolchains/llvm/prebuilt" -name "aarch64-linux-android28-clang" | head -n 1)
           if [ -z "$CLANG_BIN" ]; then
             CLANG_BIN=$(find "$NDK_PATH/toolchains/llvm/prebuilt" -name "aarch64-linux-android*-clang" | head -n 1)
@@ -199,3 +209,4 @@ jobs:
         with:
           name: snapdragon-omnibin-ai-suite
           path: omnibin-build/
+          
