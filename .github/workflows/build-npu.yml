@@ -50,7 +50,36 @@ jobs:
           fi
 
       # -------------------------------------------------------------
-      # 1. CACHE & BUILD LLAMA (With UI tools disabled)
+      # 1. BUILD STATIC OPENMP (libomp.a) FOR ANDROID ARM64
+      # -------------------------------------------------------------
+      - name: Build Static OpenMP Runtime
+        run: |
+          NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
+          if [ -z "$NDK_PATH" ]; then
+            NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
+          fi
+
+          echo "Cloning LLVM OpenMP source..."
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/llvm/llvm-project.git llvm-project-src
+          cd llvm-project-src
+          git sparse-checkout set openmp
+          cd ..
+
+          echo "Compiling static libomp.a..."
+          cmake -B openmp-build -S llvm-project-src/openmp -G "Ninja" \
+            -DCMAKE_TOOLCHAIN_FILE="${NDK_PATH}/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-28 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLIBOMP_ENABLE_SHARED=OFF \
+            -DLIBOMP_HAVE_WEAK_ATTRIBUTE=FALSE \
+            -DLIBOMP_HAVE_PSAPI=FALSE
+
+          cmake --build openmp-build -j$(nproc)
+          echo "Static OpenMP library successfully compiled at $(pwd)/openmp-build/runtime/src/libomp.a"
+
+      # -------------------------------------------------------------
+      # 2. CACHE & BUILD LLAMA (Statically Linked to libomp.a)
       # -------------------------------------------------------------
       - name: Restore Llama Build Cache
         uses: actions/cache@v4
@@ -67,17 +96,22 @@ jobs:
         run: |
           if [ -f docs/backend/snapdragon/CMakeUserPresets.json ]; then
             cp docs/backend/snapdragon/CMakeUserPresets.json ./
-          fi
+          }
+          LIBOMP_PATH="${GITHUB_WORKSPACE}/openmp-build/runtime/src/libomp.a"
+          
           cmake --preset arm64-android-snapdragon-release -B build-s \
             -DGGML_HEXAGON=ON \
             -DGGML_OPENCL=ON \
             -DBUILD_SHARED_LIBS=OFF \
             -DLLAMA_BUILD_TESTS=OFF \
-            -DLLAMA_BUILD_EXAMPLES=ON
+            -DLLAMA_BUILD_EXAMPLES=ON \
+            -DOpenMP_C_LIB_NAMES=omp \
+            -DOpenMP_CXX_LIB_NAMES=omp \
+            -DOpenMP_omp_LIBRARY="${LIBOMP_PATH}"
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 2. BUILD STABLE DIFFUSION (With Web UI Enabled)
+      # 3. BUILD STABLE DIFFUSION (Statically Linked to libomp.a & Web UI)
       # -------------------------------------------------------------
       - name: Restore SD Build Cache
         uses: actions/cache@v4
@@ -104,6 +138,8 @@ jobs:
             HEX_SDK="/opt/hexagon"
           fi
           
+          LIBOMP_PATH="${GITHUB_WORKSPACE}/openmp-build/runtime/src/libomp.a"
+          
           echo "Using Android NDK at: $NDK_PATH"
           echo "Using Hexagon SDK at: $HEX_SDK"
 
@@ -116,37 +152,25 @@ jobs:
             -DGGML_HEXAGON=ON \
             -DGGML_OPENCL=ON \
             -DHEXAGON_SDK_ROOT="${HEX_SDK}" \
-            -DSD_BUILD_EXAMPLES=ON
+            -DSD_BUILD_EXAMPLES=ON \
+            -DOpenMP_C_LIB_NAMES=omp \
+            -DOpenMP_CXX_LIB_NAMES=omp \
+            -DOpenMP_omp_LIBRARY="${LIBOMP_PATH}"
             
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 3. COMPILE UNIFIED OMNIBIN DISPATCHER & PACKAGE WITH RUNTIME LIB
+      # 4. COMPILE UNIFIED OMNIBIN DISPATCHER & PACKAGE (No Libs Folder)
       # -------------------------------------------------------------
       - name: Compile Unified Omnibin Dispatcher and Package
         run: |
-          mkdir -p omnibin-build/bin omnibin-build/lib
+          mkdir -p omnibin-build/bin
           
           echo "Gathering compiled AI binaries..."
           find Android/src/llama.cpp/build-s -type f -executable -name "llama-cli" -exec cp {} omnibin-build/bin/ \;
           find Android/src/llama.cpp/build-s -type f -executable -name "llama-server" -exec cp {} omnibin-build/bin/ \;
           find Android/src/stable-diffusion.cpp/build-s -type f -executable -name "sd" -exec cp {} omnibin-build/bin/sd-cli \;
           find Android/src/stable-diffusion.cpp/build-s -type f -executable -name "sd-server" -exec cp {} omnibin-build/bin/ \;
-
-          echo "Finding Android NDK for library extraction and compilation..."
-          NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
-          if [ -z "$NDK_PATH" ]; then
-            NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
-          fi
-          
-          echo "Extracting required runtime dependency (libomp.so)..."
-          LIBOMP_PATH=$(find "$NDK_PATH/toolchains/llvm/prebuilt" -name "libomp.so" | grep "aarch64" | head -n 1)
-          if [ -n "$LIBOMP_PATH" ]; then
-            cp "$LIBOMP_PATH" omnibin-build/lib/
-            echo "Successfully bundled libomp.so"
-          else
-            find /opt -name "libomp.so" -exec cp {} omnibin-build/lib/ \;
-          fi
 
           echo "Generating BusyBox-style NPU dispatcher..."
           cat << 'EOF' > omnibin-build/omnibin.c
@@ -193,6 +217,12 @@ jobs:
           }
           EOF
 
+          echo "Finding Android NDK for ARM64 Cross-Compilation..."
+          NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
+          if [ -z "$NDK_PATH" ]; then
+            NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
+          fi
+          
           CLANG_BIN=$(find "$NDK_PATH/toolchains/llvm/prebuilt" -name "aarch64-linux-android28-clang" | head -n 1)
           if [ -z "$CLANG_BIN" ]; then
             CLANG_BIN=$(find "$NDK_PATH/toolchains/llvm/prebuilt" -name "aarch64-linux-android*-clang" | head -n 1)
