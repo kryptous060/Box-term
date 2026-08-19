@@ -1,4 +1,4 @@
-name: Build Single Omnibin NPU Executable
+name: Build Four Standalone NPU Binaries (Zero-Lib Clean Root)
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-omnibin:
+  build-standalone:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/snapdragon-toolchain/arm64-android:v0.7
@@ -29,28 +29,23 @@ jobs:
           npm install -g pnpm
 
       # -------------------------------------------------------------
-      # 0. ROBUSTLY PATCH HEXAGON SDK UNQUOTED VARIABLES
+      # 0. PATCH HEXAGON SDK UNQUOTED VARIABLES
       # -------------------------------------------------------------
       - name: Patch Hexagon SDK CMake Files
         run: |
           HEX_FUN_PATH="/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
           if [ -f "$HEX_FUN_PATH" ]; then
-            echo "Patching unquoted variables in $HEX_FUN_PATH..."
-            
-            echo 'import re' > patch.py
-            echo 'path = "/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"' >> patch.py
-            echo 'with open(path, "r") as f: data = f.read()' >> patch.py
-            echo 'def repl(m):' >> patch.py
-            echo '    return re.sub(r"(?<!\")\$\{([^\}]+)\}(?!\")", r"\"${\1}\"", m.group(0))' >> patch.py
-            echo 'data = re.sub(r"string\s*\(\s*FIND[^)]+\)", repl, data)' >> patch.py
-            echo 'with open(path, "w") as f: f.write(data)' >> patch.py
-            
-            python3 patch.py
-            echo "Successfully patched unquoted CMake variables in Hexagon SDK."
+            python3 -c '
+import re
+path = "/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
+with open(path, "r") as f: data = f.read()
+data = re.sub(r"string\s*\(\s*FIND[^)]+\)", lambda m: re.sub(r"(?<!\${)([a-zA-Z0-9_]+)(?![\}])", r"\"\1\"", m.group(0)), data)
+with open(path, "w") as f: f.write(data)
+'
           fi
 
       # -------------------------------------------------------------
-      # 1. BUILD STATIC OPENMP (libomp.a) VIA MODERN LLVM RUNTIMES
+      # 1. BUILD STATIC OPENMP (libomp.a)
       # -------------------------------------------------------------
       - name: Build Static OpenMP Runtime
         run: |
@@ -59,13 +54,11 @@ jobs:
             NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
           fi
 
-          echo "Cloning LLVM Runtimes & dependencies..."
           git clone --depth 1 --filter=blob:none --sparse https://github.com/llvm/llvm-project.git llvm-project-src
           cd llvm-project-src
           git sparse-checkout set runtimes openmp cmake llvm/cmake third-party/unittest
           cd ..
 
-          echo "Compiling static libomp.a via LLVM runtimes framework..."
           cmake -B openmp-build -S llvm-project-src/runtimes -G "Ninja" \
             -DCMAKE_TOOLCHAIN_FILE="${NDK_PATH}/build/cmake/android.toolchain.cmake" \
             -DANDROID_ABI=arm64-v8a \
@@ -79,38 +72,18 @@ jobs:
             -DLIBOMP_HAVE_PSAPI=FALSE
 
           cmake --build openmp-build -j$(nproc)
-          
-          LIBOMP_PATH=$(find openmp-build -name "libomp.a" | head -n 1)
-          echo "Static OpenMP library successfully compiled at: ${LIBOMP_PATH}"
 
       # -------------------------------------------------------------
-      # 2. CACHE & BUILD LLAMA (Statically Linked to libomp.a)
+      # 2. BUILD LLAMA.CPP
       # -------------------------------------------------------------
-      - name: Restore Llama Build Cache
-        uses: actions/cache@v4
-        id: cache-llama
-        with:
-          path: Android/src/llama.cpp/build-s
-          key: llama-npu-build-${{ hashFiles('Android/src/llama.cpp/**/*.cpp', 'Android/src/llama.cpp/**/*.h', 'Android/src/llama.cpp/CMakeLists.txt') }}
-          restore-keys: |
-            llama-npu-build-
-
       - name: Configure and Build Llama
         working-directory: Android/src/llama.cpp
-        if: steps.cache-llama.outputs.cache-hit != 'true'
         run: |
           if [ -f docs/backend/snapdragon/CMakeUserPresets.json ]; then
             cp docs/backend/snapdragon/CMakeUserPresets.json ./
           fi
           
-          HEX_SDK="${HEXAGON_SDK_ROOT}"
-          if [ -z "$HEX_SDK" ]; then
-            HEX_SDK=$(find /opt -maxdepth 3 \( -name "*hexagon*" -o -name "*Hexagon*" \) | head -n 1)
-          fi
-          if [ -z "$HEX_SDK" ]; then
-            HEX_SDK="/opt/hexagon"
-          fi
-
+          HEX_SDK="${HEXAGON_SDK_ROOT:-/opt/hexagon}"
           LIBOMP_PATH=$(find "${GITHUB_WORKSPACE}/openmp-build" -name "libomp.a" | head -n 1)
           
           cmake --preset arm64-android-snapdragon-release -B build-s \
@@ -126,17 +99,8 @@ jobs:
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 3. BUILD STABLE DIFFUSION (Statically Linked to libomp.a)
+      # 3. BUILD STABLE-DIFFUSION.CPP
       # -------------------------------------------------------------
-      - name: Restore SD Build Cache
-        uses: actions/cache@v4
-        id: cache-sd
-        with:
-          path: Android/src/stable-diffusion.cpp/build-s
-          key: sd-npu-build-${{ hashFiles('Android/src/stable-diffusion.cpp/**/*.cpp', 'Android/src/stable-diffusion.cpp/**/*.h', 'Android/src/stable-diffusion.cpp/CMakeLists.txt') }}
-          restore-keys: |
-            sd-npu-build-
-
       - name: Configure and Build Stable Diffusion
         working-directory: Android/src/stable-diffusion.cpp
         run: |
@@ -145,18 +109,8 @@ jobs:
             NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
           fi
           
-          HEX_SDK="${HEXAGON_SDK_ROOT}"
-          if [ -z "$HEX_SDK" ]; then
-            HEX_SDK=$(find /opt -maxdepth 3 \( -name "*hexagon*" -o -name "*Hexagon*" \) | head -n 1)
-          fi
-          if [ -z "$HEX_SDK" ]; then
-            HEX_SDK="/opt/hexagon"
-          fi
-          
+          HEX_SDK="${HEXAGON_SDK_ROOT:-/opt/hexagon}"
           LIBOMP_PATH=$(find "${GITHUB_WORKSPACE}/openmp-build" -name "libomp.a" | head -n 1)
-          
-          echo "Using Android NDK at: $NDK_PATH"
-          echo "Using Hexagon SDK at: $HEX_SDK"
 
           cmake -B build-s -G "Ninja" \
             -DCMAKE_TOOLCHAIN_FILE="${NDK_PATH}/build/cmake/android.toolchain.cmake" \
@@ -175,86 +129,105 @@ jobs:
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 4. COMPILE UNIFIED OMNIBIN DISPATCHER & PACKAGE (Self-Contained)
+      # 4. PACKAGE INTO 4 CLEAN STANDALONE BINARIES
       # -------------------------------------------------------------
-      - name: Compile Unified Omnibin Dispatcher and Package
+      - name: Package Standalone Binaries with Embedded DSP Libraries
         run: |
-          mkdir -p omnibin-build/bin
-          mkdir -p omnibin-build/lib
+          mkdir -p omnibin-build/.bin
           
-          echo "Gathering compiled AI binaries..."
-          find Android/src/llama.cpp/build-s -type f -executable -name "llama-cli" -exec cp {} omnibin-build/bin/ \;
-          find Android/src/llama.cpp/build-s -type f -executable -name "llama-server" -exec cp {} omnibin-build/bin/ \;
-          find Android/src/stable-diffusion.cpp/build-s -type f -executable -name "sd" -exec cp {} omnibin-build/bin/sd-cli \;
-          find Android/src/stable-diffusion.cpp/build-s -type f -executable -name "sd-server" -exec cp {} omnibin-build/bin/ \;
+          echo "Moving real compiled binaries..."
+          find Android/src/llama.cpp/build-s -type f -executable -name "llama-cli" -exec cp {} omnibin-build/.bin/llama-cli.real \;
+          find Android/src/llama.cpp/build-s -type f -executable -name "llama-server" -exec cp {} omnibin-build/.bin/llama-server.real \;
+          find Android/src/stable-diffusion.cpp/build-s -type f -executable -name "sd" -exec cp {} omnibin-build/.bin/sd-cli.real \;
+          find Android/src/stable-diffusion.cpp/build-s -type f -executable -name "sd-server" -exec cp {} omnibin-build/.bin/sd-server.real \;
 
-          echo "Gathering Hexagon DSP Skeleton libraries..."
-          find Android/src/llama.cpp/build-s -name "libggml-htp*.so" -exec cp {} omnibin-build/lib/ \;
-          find Android/src/stable-diffusion.cpp/build-s -name "libggml-htp*.so" -exec cp -n {} omnibin-build/lib/ \;
+          echo "Converting Hexagon DSP library to C header..."
+          python3 -c '
+import glob, os
+so_files = glob.glob("Android/src/**/libggml-htp*.so", recursive=True)
+if not so_files:
+    print("Error: No libggml-htp*.so files found!")
+    exit(1)
+target_so = so_files[0]
+filename = os.path.basename(target_so)
 
-          echo "Generating BusyBox-style NPU dispatcher..."
-          cat << 'EOF' > omnibin-build/omnibin.c
+with open(target_so, "rb") as f:
+    content = f.read()
+
+with open("omnibin-build/embedded_libs.h", "w") as out:
+    out.write(f"const char* embedded_filename = \"{filename}\";\n")
+    out.write(f"unsigned int embedded_len = {len(content)};\n")
+    out.write("unsigned char embedded_htp_so[] = {\n")
+    out.write(", ".join(hex(b) for b in content))
+    out.write("\n};\n")
+print(f"Embedded {filename} ({len(content)} bytes)")
+'
+
+          echo "Generating Self-Extracting Wrapper Template..."
+          cat << 'EOF' > omnibin-build/wrapper.c
           #include <stdio.h>
           #include <string.h>
           #include <unistd.h>
           #include <libgen.h>
           #include <stdlib.h>
+          #include <sys/stat.h>
           #include <limits.h>
 
-          void execute_binary(const char *binary_name, int argc, char **argv) {
-              char exe_path[PATH_MAX];
+          #include "embedded_libs.h"
+
+          int main(int argc, char **argv) {
+              const char *env_home = getenv("HOME");
+              if (!env_home) env_home = "/data/data/com.termux/files/home";
+
+              char cache_dir[PATH_MAX], lib_dir[PATH_MAX], file_path[PATH_MAX];
+              snprintf(cache_dir, sizeof(cache_dir), "%s/.ai-suite-cache", env_home);
+              snprintf(lib_dir, sizeof(lib_dir), "%s/lib", cache_dir);
+              mkdir(cache_dir, 0755);
+              mkdir(lib_dir, 0755);
+
+              snprintf(file_path, sizeof(file_path), "%s/%s", lib_dir, embedded_filename);
+              if (access(file_path, F_OK) != 0) {
+                  FILE *f = fopen(file_path, "wb");
+                  if (f) {
+                      fwrite(embedded_htp_so, 1, embedded_len, f);
+                      fclose(f);
+                  }
+              }
+
+              char adsp_path[PATH_MAX * 2], ld_path[PATH_MAX * 2];
+              snprintf(adsp_path, sizeof(adsp_path), "%s;/vendor/lib64", lib_dir);
+              snprintf(ld_path, sizeof(ld_path), "%s:/system/lib64:/vendor/lib64", lib_dir);
+              setenv("ADSP_LIBRARY_PATH", adsp_path, 1);
+              setenv("LD_LIBRARY_PATH", ld_path, 1);
+
+              char exe_path[PATH_MAX], target_path[PATH_MAX];
               ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path)-1);
               if (len != -1) {
                   exe_path[len] = '\0';
                   char *dir = dirname(exe_path);
-                  char target_path[PATH_MAX];
-                  snprintf(target_path, sizeof(target_path), "%s/bin/%s", dir, binary_name);
+                  snprintf(target_path, sizeof(target_path), "%s/.bin/%s.real", dir, TARGET_NAME);
                   execv(target_path, argv);
               }
-              perror("Failed to launch NPU binary");
-              exit(1);
-          }
-
-          int main(int argc, char **argv) {
-              char *progname = basename(argv[0]);
-
-              if (strcmp(progname, "llama-cli") == 0) execute_binary("llama-cli", argc, argv);
-              if (strcmp(progname, "llama-server") == 0) execute_binary("llama-server", argc, argv);
-              if (strcmp(progname, "sd-cli") == 0) execute_binary("sd-cli", argc, argv);
-              if (strcmp(progname, "sd-server") == 0) execute_binary("sd-server", argc, argv);
-
-              if (argc > 1) {
-                  if (strcmp(argv[1], "llama-cli") == 0) execute_binary("llama-cli", argc, argv + 1);
-                  if (strcmp(argv[1], "llama-server") == 0) execute_binary("llama-server", argc, argv + 1);
-                  if (strcmp(argv[1], "sd-cli") == 0) execute_binary("sd-cli", argc, argv + 1);
-                  if (strcmp(argv[1], "sd-server") == 0) execute_binary("sd-server", argc, argv + 1);
-              }
-
-              printf("=== Snapdragon sm8690 NPU AI Suite ===\n");
-              printf("Usage: ai-suite [llama-cli|llama-server|sd-cli|sd-server] [args...]\n");
-              printf("Or symlink this binary to any of the tool names to execute them directly.\n");
+              perror("Failed to launch binary");
               return 1;
           }
           EOF
 
           NDK_PATH="${ANDROID_NDK_ROOT:-${ANDROID_NDK}}"
-          if [ -z "$NDK_PATH" ]; then
-            NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
-          fi
-          
-          CLANG_BIN=$(find "$NDK_PATH/toolchains/llvm/prebuilt" -name "aarch64-linux-android28-clang" | head -n 1)
-          if [ -z "$CLANG_BIN" ]; then
-            CLANG_BIN=$(find "$NDK_PATH/toolchains/llvm/prebuilt" -name "aarch64-linux-android*-clang" | head -n 1)
-          fi
-          
-          echo "Compiling omnibin dispatcher using: $CLANG_BIN"
-          $CLANG_BIN omnibin-build/omnibin.c -o omnibin-build/ai-suite -fPIE -pie
-          
-          rm omnibin-build/omnibin.c
+          CLANG_BIN=$(find "$NDK_PATH/toolchains/llvm/prebuilt" -name "aarch64-linux-android*-clang" | head -n 1)
 
-      - name: Upload Single Binary Artifact
+          echo "Compiling the 4 standalone wrappers..."
+          cd omnibin-build
+          for name in llama-cli llama-server sd-cli sd-server; do
+              $CLANG_BIN wrapper.c -DTARGET_NAME=\"$name\" -o $name -fPIE -pie
+          done
+          
+          rm -f wrapper.c embedded_libs.h
+          cd ..
+
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: snapdragon-omnibin-ai-suite
+          name: snapdragon-standalone-binaries
           path: omnibin-build/
           
