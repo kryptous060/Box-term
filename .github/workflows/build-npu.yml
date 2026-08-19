@@ -35,13 +35,21 @@ jobs:
         run: |
           HEX_FUN_PATH="/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
           if [ -f "$HEX_FUN_PATH" ]; then
-            python3 -c '
-import re
-path = "/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
-with open(path, "r") as f: data = f.read()
-data = re.sub(r"string\s*\(\s*FIND[^)]+\)", lambda m: re.sub(r"(?<!\${)([a-zA-Z0-9_]+)(?![\}])", r"\"\1\"", m.group(0)), data)
-with open(path, "w") as f: f.write(data)
-'
+            cat << 'EOF' > patch_sdk.py
+          import re
+          path = "/opt/hexagon/6.6.0.0/build/cmake/hexagon_fun.cmake"
+          with open(path, "r") as f:
+              data = f.read()
+          data = re.sub(
+              r"string\s*\(\s*FIND[^)]+\)",
+              lambda m: re.sub(r"(?<!\${)([a-zA-Z0-9_]+)(?![\}])", r"\"\1\"", m.group(0)),
+              data
+          )
+          with open(path, "w") as f:
+              f.write(data)
+          EOF
+            python3 patch_sdk.py
+            rm patch_sdk.py
           fi
 
       # -------------------------------------------------------------
@@ -142,26 +150,28 @@ with open(path, "w") as f: f.write(data)
           find Android/src/stable-diffusion.cpp/build-s -type f -executable -name "sd-server" -exec cp {} omnibin-build/.bin/sd-server.real \;
 
           echo "Converting Hexagon DSP library to C header..."
-          python3 -c '
-import glob, os
-so_files = glob.glob("Android/src/**/libggml-htp*.so", recursive=True)
-if not so_files:
-    print("Error: No libggml-htp*.so files found!")
-    exit(1)
-target_so = so_files[0]
-filename = os.path.basename(target_so)
+          cat << 'EOF' > make_header.py
+          import glob, os
+          so_files = glob.glob("Android/src/**/libggml-htp*.so", recursive=True)
+          if not so_files:
+              print("Error: No libggml-htp*.so files found!")
+              exit(1)
+          target_so = so_files[0]
+          filename = os.path.basename(target_so)
 
-with open(target_so, "rb") as f:
-    content = f.read()
+          with open(target_so, "rb") as f:
+              content = f.read()
 
-with open("omnibin-build/embedded_libs.h", "w") as out:
-    out.write(f"const char* embedded_filename = \"{filename}\";\n")
-    out.write(f"unsigned int embedded_len = {len(content)};\n")
-    out.write("unsigned char embedded_htp_so[] = {\n")
-    out.write(", ".join(hex(b) for b in content))
-    out.write("\n};\n")
-print(f"Embedded {filename} ({len(content)} bytes)")
-'
+          with open("omnibin-build/embedded_libs.h", "w") as out:
+              out.write(f'const char* embedded_filename = "{filename}";\n')
+              out.write(f'unsigned int embedded_len = {len(content)};\n')
+              out.write('unsigned char embedded_htp_so[] = {\n')
+              out.write(", ".join(hex(b) for b in content))
+              out.write('\n};\n')
+          print(f"Embedded {filename} ({len(content)} bytes)")
+          EOF
+          python3 make_header.py
+          rm make_header.py
 
           echo "Generating Self-Extracting Wrapper Template..."
           cat << 'EOF' > omnibin-build/wrapper.c
