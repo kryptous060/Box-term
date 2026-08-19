@@ -72,6 +72,7 @@ jobs:
             -DANDROID_PLATFORM=android-28 \
             -DCMAKE_BUILD_TYPE=Release \
             -DLLVM_ENABLE_RUNTIMES=openmp \
+            -DLLVM_INCLUDE_TESTS=OFF \
             -DLIBOMP_ENABLE_SHARED=OFF \
             -DLIBOMP_HAVE_WEAK_ATTRIBUTE=FALSE \
             -DLIBOMP_HAVE_PSAPI=FALSE
