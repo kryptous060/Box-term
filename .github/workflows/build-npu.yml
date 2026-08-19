@@ -59,10 +59,10 @@ jobs:
             NDK_PATH=$(find /opt -maxdepth 2 -name "android-ndk-*" | head -n 1)
           fi
 
-          echo "Cloning LLVM Runtimes & OpenMP source..."
+          echo "Cloning LLVM Runtimes & dependencies (including third-party tests to satisfy CMake)..."
           git clone --depth 1 --filter=blob:none --sparse https://github.com/llvm/llvm-project.git llvm-project-src
           cd llvm-project-src
-          git sparse-checkout set runtimes openmp cmake llvm/cmake
+          git sparse-checkout set runtimes openmp cmake llvm/cmake third-party/unittest
           cd ..
 
           echo "Compiling static libomp.a via LLVM runtimes framework..."
@@ -73,6 +73,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DLLVM_ENABLE_RUNTIMES=openmp \
             -DLLVM_INCLUDE_TESTS=OFF \
+            -DOPENMP_INCLUDE_TESTS=OFF \
             -DLIBOMP_ENABLE_SHARED=OFF \
             -DLIBOMP_HAVE_WEAK_ATTRIBUTE=FALSE \
             -DLIBOMP_HAVE_PSAPI=FALSE
