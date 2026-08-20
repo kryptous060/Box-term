@@ -21,9 +21,9 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Install Node.js, pnpm, and Shader Compiler
+      - name: Install Node.js, pnpm, and Vulkan Dependencies
         run: |
-          apt-get update && apt-get install -y curl glslc
+          apt-get update && apt-get install -y curl glslc spirv-headers
           curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
           apt-get install -y nodejs
           npm install -g pnpm
