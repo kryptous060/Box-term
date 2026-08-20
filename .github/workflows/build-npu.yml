@@ -21,15 +21,25 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Install Node.js, pnpm, and Vulkan Dependencies
+      - name: Install Node.js, pnpm, and Vulkan Shader Tools
         run: |
-          apt-get update && apt-get install -y curl glslc spirv-headers
+          apt-get update && apt-get install -y curl glslc glslang-tools cmake ninja-build
           curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
           apt-get install -y nodejs
           npm install -g pnpm
 
       # -------------------------------------------------------------
-      # 0. SAFE PATCH FOR HEXAGON SDK UNQUOTED VARIABLES
+      # 0. BUILD SPIRV-HEADERS (Bypasses NDK Sysroot Isolation)
+      # -------------------------------------------------------------
+      - name: Build and Install SPIRV-Headers
+        run: |
+          git clone --depth 1 https://github.com/KhronosGroup/SPIRV-Headers.git
+          cd SPIRV-Headers
+          cmake -B build -G "Ninja" -DCMAKE_INSTALL_PREFIX=/opt/spirv-headers
+          cmake --build build --target install
+
+      # -------------------------------------------------------------
+      # 1. SAFE PATCH FOR HEXAGON SDK UNQUOTED VARIABLES
       # -------------------------------------------------------------
       - name: Patch Hexagon SDK CMake Files
         run: |
@@ -56,7 +66,7 @@ jobs:
           fi
 
       # -------------------------------------------------------------
-      # 1. BUILD STATIC OPENMP (libomp.a)
+      # 2. BUILD STATIC OPENMP (libomp.a)
       # -------------------------------------------------------------
       - name: Build Static OpenMP Runtime
         run: |
@@ -85,7 +95,7 @@ jobs:
           cmake --build openmp-build -j$(nproc)
 
       # -------------------------------------------------------------
-      # 2. BUILD LLAMA.CPP (Retains Hexagon NPU Support)
+      # 3. BUILD LLAMA.CPP (Retains Hexagon NPU Support)
       # -------------------------------------------------------------
       - name: Configure and Build Llama
         working-directory: Android/src/llama.cpp
@@ -111,7 +121,7 @@ jobs:
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 3. BUILD STABLE-DIFFUSION.CPP (Switched to Vulkan Backend)
+      # 4. BUILD STABLE-DIFFUSION.CPP (Switched to Vulkan Backend)
       # -------------------------------------------------------------
       - name: Configure and Build Stable Diffusion
         working-directory: Android/src/stable-diffusion.cpp
@@ -122,6 +132,9 @@ jobs:
           fi
           
           LIBOMP_PATH=$(find "${GITHUB_WORKSPACE}/openmp-build" -name "libomp.a" | head -n 1)
+          
+          # Dynamically locate the CMake configuration directory we just built
+          SPIRV_DIR=$(find /opt/spirv-headers -name "SPIRV-HeadersConfig.cmake" | head -n 1 | xargs dirname)
 
           cmake -B build-s -G "Ninja" \
             -DCMAKE_TOOLCHAIN_FILE="${NDK_PATH}/build/cmake/android.toolchain.cmake" \
@@ -133,12 +146,13 @@ jobs:
             -DSD_BUILD_EXAMPLES=ON \
             -DOpenMP_C_LIB_NAMES=omp \
             -DOpenMP_CXX_LIB_NAMES=omp \
-            -DOpenMP_omp_LIBRARY="${LIBOMP_PATH}"
+            -DOpenMP_omp_LIBRARY="${LIBOMP_PATH}" \
+            -DSPIRV-Headers_DIR="${SPIRV_DIR}"
             
           cmake --build build-s -j$(nproc)
 
       # -------------------------------------------------------------
-      # 4. PACKAGE INTO STANDALONE BINARIES
+      # 5. PACKAGE INTO STANDALONE BINARIES
       # -------------------------------------------------------------
       - name: Package Standalone Binaries
         run: |
