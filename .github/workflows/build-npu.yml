@@ -40,7 +40,7 @@ jobs:
           cmake --build build --target install
           cd ..
 
-          # 2. Vulkan C++ Headers (Fixes missing vulkan.hpp)
+          # 2. Vulkan C++ Headers
           git clone --depth 1 https://github.com/KhronosGroup/Vulkan-Headers.git
           cd Vulkan-Headers
           cmake -B build -G "Ninja" -DCMAKE_INSTALL_PREFIX=/opt/vulkan-headers
@@ -156,7 +156,7 @@ jobs:
             -DOpenMP_omp_LIBRARY="${LIBOMP_PATH}" \
             -DSPIRV-Headers_DIR="${SPIRV_DIR}" \
             -DVulkan_INCLUDE_DIR=/opt/vulkan-headers/include \
-            -DCMAKE_CXX_FLAGS="-I/opt/vulkan-headers/include"
+            -DCMAKE_CXX_FLAGS="-I/opt/vulkan-headers/include -I/opt/spirv-headers/include"
             
           cmake --build build-s -j$(nproc)
 
