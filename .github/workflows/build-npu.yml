@@ -29,13 +29,21 @@ jobs:
           npm install -g pnpm
 
       # -------------------------------------------------------------
-      # 0. BUILD SPIRV-HEADERS (Bypasses NDK Sysroot Isolation)
+      # 0. BUILD SPIRV AND VULKAN HEADERS (Bypasses NDK Sysroot Isolation)
       # -------------------------------------------------------------
-      - name: Build and Install SPIRV-Headers
+      - name: Build and Install Khronos Headers
         run: |
+          # 1. SPIRV Headers
           git clone --depth 1 https://github.com/KhronosGroup/SPIRV-Headers.git
           cd SPIRV-Headers
           cmake -B build -G "Ninja" -DCMAKE_INSTALL_PREFIX=/opt/spirv-headers
+          cmake --build build --target install
+          cd ..
+
+          # 2. Vulkan C++ Headers (Fixes missing vulkan.hpp)
+          git clone --depth 1 https://github.com/KhronosGroup/Vulkan-Headers.git
+          cd Vulkan-Headers
+          cmake -B build -G "Ninja" -DCMAKE_INSTALL_PREFIX=/opt/vulkan-headers
           cmake --build build --target install
 
       # -------------------------------------------------------------
@@ -133,7 +141,6 @@ jobs:
           
           LIBOMP_PATH=$(find "${GITHUB_WORKSPACE}/openmp-build" -name "libomp.a" | head -n 1)
           
-          # Dynamically locate the CMake configuration directory we just built
           SPIRV_DIR=$(find /opt/spirv-headers -name "SPIRV-HeadersConfig.cmake" | head -n 1 | xargs dirname)
 
           cmake -B build-s -G "Ninja" \
@@ -147,7 +154,9 @@ jobs:
             -DOpenMP_C_LIB_NAMES=omp \
             -DOpenMP_CXX_LIB_NAMES=omp \
             -DOpenMP_omp_LIBRARY="${LIBOMP_PATH}" \
-            -DSPIRV-Headers_DIR="${SPIRV_DIR}"
+            -DSPIRV-Headers_DIR="${SPIRV_DIR}" \
+            -DVulkan_INCLUDE_DIR=/opt/vulkan-headers/include \
+            -DCMAKE_CXX_FLAGS="-I/opt/vulkan-headers/include"
             
           cmake --build build-s -j$(nproc)
 
