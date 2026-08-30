@@ -1,0 +1,54 @@
+name: Quantize fuse-1-Lite to IQ4_NL
+
+on:
+  workflow_dispatch:
+
+jobs:
+  quantize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Maximize Runner Disk Space
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 2048
+          swap-size-mb: 1024
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+          remove-docker-images: 'true'
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential git python3-pip
+          pip3 install huggingface_hub
+
+      - name: Build llama.cpp (llama-quantize)
+        run: |
+          git clone https://github.com/ggerganov/llama.cpp.git
+          cd llama.cpp
+          cmake -B build -DGGML_NATIVE=OFF
+          cmake --build build --config Release --target llama-quantize -j$(nproc)
+
+      - name: Download F16 GGUF
+        run: |
+          python3 -c "
+          from huggingface_hub import hf_hub_download
+          hf_hub_download(repo_id='Akahsizrr/fuse-1-Lite-GGUF', filename='fuse-1-Lite-F16.gguf', local_dir='.')
+          "
+
+      - name: Quantize to IQ4_NL
+        run: |
+          ./llama.cpp/build/bin/llama-quantize fuse-1-Lite-F16.gguf fuse-1-Lite-IQ4_NL.gguf IQ4_NL
+
+      - name: Upload IQ4_NL to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: gguf-quants
+          files: fuse-1-Lite-IQ4_NL.gguf
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
