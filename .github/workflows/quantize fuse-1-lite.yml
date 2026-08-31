@@ -51,7 +51,7 @@ jobs:
         run: |
           pip3 install --no-cache-dir torch --extra-index-url https://download.pytorch.org/whl/cpu
           pip3 install --no-cache-dir -U pyopenssl cryptography boto3 botocore
-          pip3 install --no-cache-dir transformers huggingface_hub sentencepiece optuna
+          pip3 install --no-cache-dir transformers huggingface_hub sentencepiece optuna accelerate
 
       - name: Cache llama.cpp Build
         id: cache-llama
@@ -98,7 +98,6 @@ jobs:
           cat << 'EOF' > cpu_heretic.py
           import os
           import gc
-          import copy
           import torch
           import optuna
           import torch.nn.functional as F
@@ -115,7 +114,7 @@ jobs:
           )
           model = AutoModelForCausalLM.from_pretrained(
               MODEL_PATH,
-              torch_dtype=torch.float32,
+              dtype=torch.float32,
               device_map="cpu",
               trust_remote_code=True
           )
@@ -187,42 +186,43 @@ jobs:
                   out = model(**inputs)
                   baseline_logits.append(out.logits.detach())
 
-          def apply_direction_ablation(model_obj, start_layer, end_layer, alpha):
-              modified_model = copy.deepcopy(model_obj)
+          def evaluate_ablation_trial(start_layer, end_layer, alpha):
+              """In-place weight mutation and restoration to eliminate RAM footprint during trials."""
+              saved_weights = {}
               for idx in range(start_layer, end_layer + 1):
-                  direction = refusal_directions[idx].unsqueeze(-1)
-                  layer = modified_model.model.layers[idx]
+                  layer = model.model.layers[idx]
                   if hasattr(layer, "mlp") and hasattr(layer.mlp, "down_proj"):
+                      saved_weights[idx] = layer.mlp.down_proj.weight.data.clone()
+                      direction = refusal_directions[idx].unsqueeze(-1)
                       W = layer.mlp.down_proj.weight.data
                       proj = torch.matmul(direction, torch.matmul(direction.T, W))
                       layer.mlp.down_proj.weight.data = W - alpha * proj
-              return modified_model
 
-          def objective(trial):
-              num_layers = len(model.model.layers)
-              start_layer = trial.suggest_int("start_layer", int(num_layers * 0.3), int(num_layers * 0.6))
-              end_layer = trial.suggest_int("end_layer", start_layer + 1, int(num_layers * 0.8))
-              alpha = trial.suggest_float("alpha", 0.1, 0.7)
-              
-              test_model = apply_direction_ablation(model, start_layer, end_layer, alpha)
-              test_model.eval()
-              
               total_kl_loss = 0.0
               with torch.no_grad():
                   for i, prompt in enumerate(NEUTRAL_CALIBRATION_PROMPTS):
                       inputs = tokenizer(prompt, return_tensors="pt").to(DEVICE)
-                      new_logits = test_model(**inputs).logits
+                      new_logits = model(**inputs).logits
                       orig_logits = baseline_logits[i]
                       
                       p = F.log_softmax(new_logits, dim=-1)
                       q = F.softmax(orig_logits, dim=-1)
                       kl = F.kl_div(p, q, reduction="batchmean")
                       total_kl_loss += kl.item()
-                      
-              del test_model
+
+              # Restore original weights
+              for idx, orig_w in saved_weights.items():
+                  model.model.layers[idx].mlp.down_proj.weight.data = orig_w
+
               gc.collect()
-              
               return total_kl_loss
+
+          def objective(trial):
+              num_layers = len(model.model.layers)
+              start_layer = trial.suggest_int("start_layer", int(num_layers * 0.3), int(num_layers * 0.6))
+              end_layer = trial.suggest_int("end_layer", start_layer + 1, int(num_layers * 0.8))
+              alpha = trial.suggest_float("alpha", 0.1, 0.7)
+              return evaluate_ablation_trial(start_layer, end_layer, alpha)
 
           print("Running Optuna hyperparameter optimization (10 trials)...")
           optuna.logging.set_verbosity(optuna.logging.WARNING)
@@ -232,16 +232,17 @@ jobs:
           best_params = study.best_params
           print(f"Optimal parameters found: {best_params}")
 
-          print("Applying final optimized abliteration to model...")
-          final_model = apply_direction_ablation(
-              model, 
-              best_params["start_layer"], 
-              best_params["end_layer"], 
-              best_params["alpha"]
-          )
+          print("Applying permanent optimized abliteration to model...")
+          for idx in range(best_params["start_layer"], best_params["end_layer"] + 1):
+              layer = model.model.layers[idx]
+              if hasattr(layer, "mlp") and hasattr(layer.mlp, "down_proj"):
+                  direction = refusal_directions[idx].unsqueeze(-1)
+                  W = layer.mlp.down_proj.weight.data
+                  proj = torch.matmul(direction, torch.matmul(direction.T, W))
+                  layer.mlp.down_proj.weight.data = W - best_params["alpha"] * proj
 
           print(f"Saving abliterated model to {OUTPUT_PATH}...")
-          final_model.save_pretrained(OUTPUT_PATH)
+          model.save_pretrained(OUTPUT_PATH)
           tokenizer.save_pretrained(OUTPUT_PATH)
           print("Abliteration complete!")
           EOF
