@@ -7,25 +7,27 @@ jobs:
   quantize:
     runs-on: ubuntu-latest
     steps:
-      - name: Maximize Runner Disk Space & Set 8GB Swap
-        uses: easimon/maximize-build-space@v10
-        with:
-          root-reserve-mb: 512
-          swap-size-mb: 8192      # 8GB swap + 7GB RAM = 15GB total virtual RAM
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
-          remove-codeql: 'true'
-          remove-docker-images: 'true'
-
-      - name: Free Pre-installed Disk Space
+      - name: Setup Btrfs Compressed Mount & 16GB Swap
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/powershell
-          sudo rm -rf /usr/share/swift
-          df -h
+          # 1. Disable existing default swap
+          sudo swapoff -a || true
+
+          # 2. Allocate 16GB Swapfile on host ext4 filesystem
+          sudo fallocate -l 16G /host_swap
+          sudo chmod 600 /host_swap
+          sudo mkswap /host_swap
+          sudo swapon /host_swap
+
+          # 3. Create a 40GB sparse loop image for compressed Btrfs storage
+          truncate -s 40G /btrfs_disk.img
+          sudo mkfs.btrfs -f /btrfs_disk.img
+          sudo mkdir -p /mnt/workspace
+          sudo mount -o loop,compress=zstd:1 /btrfs_disk.img /mnt/workspace
+          sudo chown -R runner:docker /mnt/workspace
+
+          # 4. Verify system space and swap memory
+          free -h
+          df -h /mnt/workspace
 
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -33,7 +35,7 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake build-essential git python3-pip
+          sudo apt-get install -y cmake build-essential git python3-pip btrfs-progs
 
       - name: Install CPU-Only Python Dependencies
         run: |
@@ -52,7 +54,7 @@ jobs:
         run: |
           python3 -c "
           from huggingface_hub import snapshot_download
-          snapshot_download(repo_id='auryn-macmillan/fuse-1-Lite-v2', local_dir='./fuse-1-lite-v2-src')
+          snapshot_download(repo_id='auryn-macmillan/fuse-1-Lite-v2', local_dir='/mnt/workspace/fuse-1-lite-v2-src')
           "
 
       - name: Run Heretic Abliteration
@@ -60,25 +62,31 @@ jobs:
           HF_TRUST_REMOTE_CODE: "1"
           PYTHONUNBUFFERED: "1"
         run: |
-          yes | heretic --model ./fuse-1-lite-v2-src --study-checkpoint-dir ./fuse-1-lite-v2-heretic
-          rm -rf ./fuse-1-lite-v2-src    # Delete raw source files immediately to free disk space
+          yes | heretic \
+            --model /mnt/workspace/fuse-1-lite-v2-src \
+            --study-checkpoint-dir /mnt/workspace/fuse-1-lite-v2-heretic \
+            --batch-size 1 \
+            --max-batch-size 1 \
+            --dtypes float16 \
+            --offload-outputs-to-cpu
+          rm -rf /mnt/workspace/fuse-1-lite-v2-src    # Delete raw source files immediately to free disk space
 
       - name: Convert HF Safetensors to F16 GGUF
         env:
           HF_TRUST_REMOTE_CODE: "1"
         run: |
-          python3 llama.cpp/convert_hf_to_gguf.py ./fuse-1-lite-v2-heretic --outtype f16 --outfile fuse-1-Lite-v2-Heretic-F16.gguf
-          rm -rf ./fuse-1-lite-v2-heretic  # Delete PyTorch weights immediately to free disk space
+          python3 llama.cpp/convert_hf_to_gguf.py /mnt/workspace/fuse-1-lite-v2-heretic --outtype f16 --outfile /mnt/workspace/fuse-1-Lite-v2-Heretic-F16.gguf
+          rm -rf /mnt/workspace/fuse-1-lite-v2-heretic  # Delete PyTorch weights immediately to free disk space
 
       - name: Quantize to IQ4_NL
         run: |
-          ./llama.cpp/build/bin/llama-quantize fuse-1-Lite-v2-Heretic-F16.gguf fuse-1-Lite-v2-Heretic-IQ4_NL.gguf IQ4_NL
-          rm -f fuse-1-Lite-v2-Heretic-F16.gguf # Delete intermediate F16 GGUF immediately
+          ./llama.cpp/build/bin/llama-quantize /mnt/workspace/fuse-1-Lite-v2-Heretic-F16.gguf /mnt/workspace/fuse-1-Lite-v2-Heretic-IQ4_NL.gguf IQ4_NL
+          rm -f /mnt/workspace/fuse-1-Lite-v2-Heretic-F16.gguf # Delete intermediate F16 GGUF immediately
 
       - name: Upload IQ4_NL to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: gguf-quants
-          files: fuse-1-Lite-v2-Heretic-IQ4_NL.gguf
+          files: /mnt/workspace/fuse-1-Lite-v2-Heretic-IQ4_NL.gguf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
