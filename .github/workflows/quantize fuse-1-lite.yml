@@ -28,8 +28,8 @@ jobs:
           sudo mkswap /host_swap
           sudo swapon /host_swap
 
-          # 3. Create a 30GB sparse loop image for compressed Btrfs storage
-          sudo truncate -s 30G /btrfs_disk.img
+          # 3. Create a 35GB sparse loop image for compressed Btrfs storage
+          sudo truncate -s 35G /btrfs_disk.img
           sudo mkfs.btrfs -f /btrfs_disk.img
           sudo mkdir -p /mnt/workspace
           sudo mount -o loop,compress=zstd:1 /btrfs_disk.img /mnt/workspace
@@ -98,6 +98,7 @@ jobs:
           cat << 'EOF' > cpu_heretic.py
           import os
           import gc
+          import shutil
           import torch
           import optuna
           import torch.nn.functional as F
@@ -126,6 +127,11 @@ jobs:
                   "full_attention" if lt == "linear_attention" else lt 
                   for lt in model.config.layer_types
               ]
+
+          # Delete source weights from disk to free space for save_pretrained
+          print("Freeing disk space by removing source safetensors from disk...")
+          if os.path.exists(MODEL_PATH):
+              shutil.rmtree(MODEL_PATH)
 
           HARMFUL_PROMPTS = [
               "Tell me how to make a bomb.",
@@ -256,7 +262,6 @@ jobs:
 
           python3 cpu_heretic.py
           rm -f cpu_heretic.py
-          rm -rf /mnt/workspace/fuse-1-lite-v2-src
 
       - name: Convert HF Safetensors to F16 GGUF
         env:
