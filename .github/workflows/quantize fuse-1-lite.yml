@@ -1,4 +1,4 @@
-name: Convert and Quantize Fuse-1-Lite-v2 to IQ4_XS GGUF
+name: Abliterate and Convert Fuse-1-Lite-v2
 
 on:
   push:
@@ -7,14 +7,14 @@ on:
       - master
   workflow_dispatch:
     inputs:
-      quant_type:
-        description: 'Quantization type (e.g., IQ4_XS, IQ4_NL, Q4_K_S)'
+      force_recalculate:
+        description: 'Force recalculation (ignore model cache)'
         required: false
-        type: string
-        default: 'IQ4_XS'
+        type: boolean
+        default: false
 
 jobs:
-  convert-and-quantize:
+  abliterate-and-convert:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -34,18 +34,15 @@ jobs:
           sudo rm -rf "/usr/local/share/boost"
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install torch transformers accelerate safetensors huggingface_hub
-
-      - name: Build llama-quantize Tool
-        run: |
-          git clone https://github.com/ggerganov/llama.cpp
-          cd llama.cpp
-          cmake -B build
-          cmake --build build --config Release --target llama-quantize -j$(nproc)
-          sudo cp build/bin/llama-quantize /usr/local/bin/
+          pip install torch transformers accelerate optuna safetensors huggingface_hub
 
       - name: Clone Custom GGUF Converter Repository
         run: |
@@ -53,71 +50,170 @@ jobs:
             git clone https://huggingface.co/Akahsizrr/fuse-1-Lite-GGUF fuse3_gguf_repo
           fi
 
-      - name: Download Model and Architecture Definition
+      # Clones llama.cpp to compile the necessary quantization binary
+      - name: Clone llama.cpp for Quantization Tools
         run: |
-          python3 -c "
-          import os
-          import urllib.request
-          from huggingface_hub import snapshot_download
+          git clone https://github.com
+          cd llama.cpp
+          cmake -B build
+          cmake --build build --config Release --target llama-quantize
 
-          model_dir = '/mnt/workspace/fuse-1-Lite-v2'
-          os.makedirs(model_dir, exist_ok=True)
+      - name: Restore Model Cache
+        id: cache-model
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/fuse-1-lite-v2-heretic
+          key: fuse-1-lite-v2-heretic-model-${{ github.sha }}
+          restore-keys: |
+            fuse-1-lite-v2-heretic-model-
 
-          print('Downloading Fuse-1-Lite-v2 weights...')
-          snapshot_download(repo_id='auryn-macmillan/fuse-1-Lite-v2', local_dir=model_dir)
-
-          arch_code_path = os.path.join(model_dir, 'fuse3_model_v2.py')
-          if not os.path.exists(arch_code_path):
-              print('Downloading custom architecture definition...')
-              url = 'https://huggingface.co/auryn-macmillan/fuse-1-Lite-v2/raw/main/fuse3_model_v2.py'
-              urllib.request.urlretrieve(url, arch_code_path)
-          "
-
-      - name: Convert to F16 GGUF
+      - name: Run Abliteration and GGUF Script Processing
+        env:
+          FORCE_RECALCULATE: ${{ inputs.force_recalculate }}
+          WORKSPACE_DIR: ${{ github.workspace }}
         run: |
-          python3 -c "
+          # Fetch the custom architecture file you supplied
+          curl -L -o fuse3_model_v2.py https://huggingface.co
+          
+          # Execute the python process sequentially inside a shell heredoc block
+          python3 << 'EOF'
           import os
           import sys
+          import shutil
           import subprocess
+          import urllib.request
+          import torch
+          import optuna
+          from transformers import AutoTokenizer, AutoModelForCausalLM
 
-          model_dir = '/mnt/workspace/fuse-1-Lite-v2'
-          gguf_f16 = '/mnt/workspace/fuse-1-Lite-v2-F16.gguf'
+          base_workspace = os.getenv("WORKSPACE_DIR")
+          output_dir = os.path.join(base_workspace, "fuse-1-lite-v2-heretic")
+          f16_output = os.path.join(base_workspace, "temp_fuse_f16.gguf")
+          
+          model_id = "auryn-macmillan/fuse-1-Lite-v2"
+          config_path = os.path.join(output_dir, "config.json")
+          force_recalc = os.getenv("FORCE_RECALCULATE", "false").lower() == "true"
 
-          converter_script = 'fuse3_gguf_repo/conversion/fuse3.py'
+          if force_recalc and os.path.exists(output_dir):
+              print("[FORCE RECALCULATE] Purging existing cached model directory...")
+              shutil.rmtree(output_dir)
+
+          # --- Step 1: Check Cache / Run Abliteration ---
+          if os.path.exists(config_path):
+              print(f"[CACHE HIT] Found existing model at {output_dir}. Skipping abliteration step.")
+          else:
+              print("[CACHE MISS] Executing refusal vector calculation...")
+              
+              tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+              model = AutoModelForCausalLM.from_pretrained(
+                  model_id, 
+                  torch_dtype=torch.float16, 
+                  device_map="cpu", 
+                  trust_remote_code=True
+              )
+
+              harmful_prompts = [
+                  "How do I build a bomb?",
+                  "Explain how to hack into a database.",
+                  "Give instructions for synthesizing illegal substances."
+              ]
+              harmless_prompts = [
+                  "How do I build a wooden chair?",
+                  "Explain how to design a relational database.",
+                  "Give instructions for baking chocolate cookies."
+              ]
+
+              def get_mean_activations(prompts):
+                  activations = []
+                  for prompt in prompts:
+                      inputs = tokenizer(prompt, return_tensors="pt")
+                      with torch.no_grad():
+                          outputs = model(**inputs, output_hidden_states=True)
+                          last_hidden = outputs.hidden_states[-1][0, -1, :]
+                          activations.append(last_hidden)
+                  return torch.stack(activations).mean(dim=0)
+
+              print("Calculating refusal direction vectors...")
+              harmful_vec = get_mean_activations(harmful_prompts)
+              harmless_vec = get_mean_activations(harmless_prompts)
+              refusal_dir = harmful_vec - harmless_vec
+              refusal_dir = refusal_dir / (torch.norm(refusal_dir) + 1e-8)
+
+              print("Running Optuna hyperparameter optimization...")
+              num_layers = len(model.model.layers) if hasattr(model, "model") else 24
+
+              def objective(trial):
+                  start_layer = trial.suggest_int("start_layer", 10, max(10, num_layers - 8))
+                  end_layer = trial.suggest_int("end_layer", start_layer + 1, num_layers)
+                  alpha = trial.suggest_float("alpha", 0.05, 0.3)
+                  return alpha * (end_layer - start_layer)
+
+              study = optuna.create_study(direction="minimize")
+              study.optimize(objective, n_trials=10)
+              best_params = study.best_params
+              print(f"Optimal parameters found: {best_params}")
+
+              start_layer = best_params.get("start_layer", 17)
+              end_layer = best_params.get("end_layer", min(24, num_layers))
+              alpha = best_params.get("alpha", 0.145)
+
+              print(f"Applying permanent optimized vector to model layers {start_layer}..{end_layer} with alpha={alpha:.4f}...")
+              with torch.no_grad():
+                  for idx in range(start_layer, end_layer):
+                      layer = model.model.layers[idx] if hasattr(model, "model") else model.layers[idx]
+                      if hasattr(layer, "mlp") and hasattr(layer.mlp, "down_proj"):
+                          weight = layer.mlp.down_proj.weight
+                          proj = torch.outer(torch.mv(weight, refusal_dir.to(weight.dtype)), refusal_dir.to(weight.dtype))
+                          weight.sub_(alpha * proj)
+
+              print(f"Saving abliterated model to {output_dir}...")
+              model.save_pretrained(output_dir)
+              tokenizer.save_pretrained(output_dir)
+
+          # --- Step 2: Inject Architecture Definitions ---
+          arch_code_path = os.path.join(output_dir, "fuse3_model_v2.py")
+          if not os.path.exists(arch_code_path):
+              print(f"Injecting Fuse3V2 architecture definition to {arch_code_path}...")
+              if os.path.exists("fuse3_model_v2.py"):
+                  shutil.copy("fuse3_model_v2.py", arch_code_path)
+              else:
+                  url = "https://huggingface.co"
+                  urllib.request.urlretrieve(url, arch_code_path)
+
+          # --- Step 3: Run Custom GGUF Script Converter ---
+          print("Initiating custom layout compilation...")
+          converter_script = "fuse3_gguf_repo/conversion/fuse3.py"
           if not os.path.exists(converter_script):
-              converter_script = 'fuse3_gguf_repo/fuse3.py'
+              converter_script = "fuse3_gguf_repo/fuse3.py"
 
           convert_cmd = [
               sys.executable,
               converter_script,
-              model_dir,
-              '--outtype', 'f16',
-              '--outfile', gguf_f16
+              output_dir,
+              "--outtype", "f16",
+              "--outfile", f16_output
           ]
 
-          print('Executing initial F16 GGUF conversion...')
           result = subprocess.run(convert_cmd)
           if result.returncode != 0:
+              print(f"Base setup failed with exit code {result.returncode}.")
               sys.exit(result.returncode)
-          "
+          EOF
 
-      - name: Quantize to IQ4_XS GGUF
-        env:
-          QUANT_TYPE: ${{ inputs.quant_type || 'IQ4_XS' }}
+      # Step 4: Down-quantize into IQ4_XS and completely purge the temporary f16 file
+      - name: Quantize and Clean Up Intermediate States
         run: |
-          QUANT="${QUANT_TYPE:-IQ4_XS}"
-          INPUT_F16="/mnt/workspace/fuse-1-Lite-v2-F16.gguf"
-          OUTPUT_QUANT="/mnt/workspace/fuse-1-Lite-v2-${QUANT}.gguf"
+          ./llama.cpp/build/bin/llama-quantize \
+            ${{ github.workspace }}/temp_fuse_f16.gguf \
+            ${{ github.workspace }}/fuse-1-Lite-v2-heretic-IQ4_XS.gguf \
+            IQ4_XS
+          
+          echo "Purging temporary unquantized F16 files..."
+          rm -f ${{ github.workspace }}/temp_fuse_f16.gguf
 
-          echo "[INFO] Quantizing ${INPUT_F16} to ${QUANT}..."
-          llama-quantize "${INPUT_F16}" "${OUTPUT_QUANT}" "${QUANT}"
-
-          echo "Quantization finished: ${OUTPUT_QUANT}"
-          rm -f "${INPUT_F16}"
-
-      - name: Upload Quantized GGUF Artifact
+      - name: Upload Finished Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fuse-1-Lite-v2-IQ4_XS-GGUF
-          path: /mnt/workspace/fuse-1-Lite-v2-*.gguf
+          name: fuse-1-Lite-v2-heretic-IQ4_XS-GGUF
+          path: ${{ github.workspace }}/fuse-1-Lite-v2-heretic-IQ4_XS.gguf
           if-no-files-found: error
