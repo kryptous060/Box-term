@@ -57,7 +57,7 @@ jobs:
 
       - name: Run Heretic Abliteration
         run: |
-          heretic --model ./fuse-1-lite-v2-src --output ./fuse-1-lite-v2-heretic
+          heretic --model ./fuse-1-lite-v2-src --study-checkpoint-dir ./fuse-1-lite-v2-heretic
           rm -rf ./fuse-1-lite-v2-src    # Delete raw source files immediately to free disk space
 
       - name: Convert HF Safetensors to F16 GGUF
