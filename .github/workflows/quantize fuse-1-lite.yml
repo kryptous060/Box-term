@@ -43,16 +43,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install torch transformers accelerate optuna safetensors huggingface_hub
 
-      - name: Clone Custom GGUF Converter Repository
+      - name: Download Conversion Scripts
         run: |
-          if [ ! -d "fuse3_gguf_repo" ]; then
-            # FIX: Point to the actual user repository containing the custom conversion scripts
-            git clone https://huggingface.co fuse3_gguf_repo
-          fi
+          mkdir -p fuse3_gguf_repo/conversion
+          curl -L -o fuse3_gguf_repo/conversion/fuse3.py https://huggingface.co
 
       - name: Clone llama.cpp for Quantization Tools
         run: |
-          # FIX: Point to the official llama.cpp repository
           git clone https://github.com
           cd llama.cpp
           cmake -B build
@@ -72,7 +69,6 @@ jobs:
           FORCE_RECALCULATE: ${{ inputs.force_recalculate }}
           WORKSPACE_DIR: ${{ github.workspace }}
         run: |
-          # FIX: Replaced empty domain with target model's raw python file link if needed
           curl -L -o fuse3_model_v2.py https://huggingface.co
           
           python3 << 'EOF'
@@ -170,13 +166,27 @@ jobs:
               tokenizer.save_pretrained(output_dir)
 
           # --- Step 2: Inject Architecture Definitions ---
+          os.makedirs(output_dir, exist_ok=True)
+          
+          # Download structural configurations required for metadata mapping
+          meta_assets = {
+              "config.json": "https://huggingface.co",
+              "generation_config.json": "https://huggingface.co",
+              "tokenizer_config.json": "https://huggingface.co",
+              "tokenizer.json": "https://huggingface.co"
+          }
+          for name, url in meta_assets.items():
+              dest = os.path.join(output_dir, name)
+              if not os.path.exists(dest):
+                  print(f"Downloading {name} structure...")
+                  urllib.request.urlretrieve(url, dest)
+
           arch_code_path = os.path.join(output_dir, "fuse3_model_v2.py")
           if not os.path.exists(arch_code_path):
               print(f"Injecting Fuse3V2 architecture definition to {arch_code_path}...")
               if os.path.exists("fuse3_model_v2.py"):
                   shutil.copy("fuse3_model_v2.py", arch_code_path)
               else:
-                  # FIX: Provided full URL to download the architecture script rather than the generic root
                   url = "https://huggingface.co"
                   urllib.request.urlretrieve(url, arch_code_path)
 
