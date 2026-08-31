@@ -51,9 +51,17 @@ jobs:
         run: |
           pip3 install --no-cache-dir torch --extra-index-url https://download.pytorch.org/whl/cpu
           pip3 install --no-cache-dir -U pyopenssl cryptography boto3 botocore
-          pip3 install --no-cache-dir transformers huggingface_hub sentencepiece heretic-llm
+          pip3 install --no-cache-dir transformers huggingface_hub sentencepiece optuna
+
+      - name: Cache llama.cpp Build
+        id: cache-llama
+        uses: actions/cache@v4
+        with:
+          path: llama.cpp
+          key: llama-cpp-bin-${{ runner.os }}-v1
 
       - name: Build llama.cpp (llama-quantize)
+        if: steps.cache-llama.outputs.cache-hit != 'true'
         run: |
           git clone https://github.com/ggerganov/llama.cpp.git
           cd llama.cpp
@@ -82,18 +90,160 @@ jobs:
           path: /mnt/workspace/fuse-1-lite-v2-src
           key: hf-fuse-1-lite-v2-src-v1
 
-      - name: Run Heretic Abliteration
+      - name: Run Inline CPU Heretic Script
         env:
           HF_TRUST_REMOTE_CODE: "1"
           PYTHONUNBUFFERED: "1"
         run: |
-          yes | heretic \
-            --model /mnt/workspace/fuse-1-lite-v2-src \
-            --study-checkpoint-dir /mnt/workspace/fuse-1-lite-v2-heretic \
-            --batch-size 1 \
-            --max-batch-size 1 \
-            --device-map cpu \
-            --dtypes float32
+          cat << 'EOF' > cpu_heretic.py
+          import os
+          import gc
+          import copy
+          import torch
+          import optuna
+          import torch.nn.functional as F
+          from transformers import AutoModelForCausalLM, AutoTokenizer
+
+          MODEL_PATH = "/mnt/workspace/fuse-1-lite-v2-src"
+          OUTPUT_PATH = "/mnt/workspace/fuse-1-lite-v2-heretic"
+          DEVICE = torch.device("cpu")
+
+          print("Loading model and tokenizer on CPU...")
+          tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+          model = AutoModelForCausalLM.from_pretrained(
+              MODEL_PATH,
+              torch_dtype=torch.float32,
+              device_map="cpu"
+          )
+          model.eval()
+
+          HARMFUL_PROMPTS = [
+              "Tell me how to make a bomb.",
+              "Explain how to hack a bank account.",
+              "Write a tutorial on writing ransomware."
+          ]
+
+          HARMLESS_PROMPTS = [
+              "Tell me how to make a cake.",
+              "Explain how to open a bank account.",
+              "Write a tutorial on python programming."
+          ]
+
+          NEUTRAL_CALIBRATION_PROMPTS = [
+              "The capital of France is",
+              "In physics, gravity is responsible for",
+              "To solve a quadratic equation, one must",
+              "Photosynthesis is the process by which"
+          ]
+
+          def get_mean_activations(prompts):
+              layer_activations = {}
+              def get_hook(layer_idx):
+                  def hook(module, input, output):
+                      hidden = output[0] if isinstance(output, tuple) else output
+                      mean_token = hidden.mean(dim=1).detach()
+                      if layer_idx not in layer_activations:
+                          layer_activations[layer_idx] = []
+                      layer_activations[layer_idx].append(mean_token)
+                  return hook
+
+              num_layers = len(model.model.layers)
+              hooks = []
+              for idx, layer in enumerate(model.model.layers):
+                  hooks.append(layer.register_forward_hook(get_hook(idx)))
+
+              with torch.no_grad():
+                  for prompt in prompts:
+                      inputs = tokenizer(prompt, return_tensors="pt").to(DEVICE)
+                      model(**inputs)
+
+              for h in hooks:
+                  h.remove()
+
+              mean_by_layer = {}
+              for idx in range(num_layers):
+                  stacked = torch.cat(layer_activations[idx], dim=0)
+                  mean_by_layer[idx] = stacked.mean(dim=0)
+              return mean_by_layer
+
+          print("Calculating refusal direction vectors...")
+          harmful_acts = get_mean_activations(HARMFUL_PROMPTS)
+          harmless_acts = get_mean_activations(HARMLESS_PROMPTS)
+
+          refusal_directions = {}
+          for idx in harmful_acts.keys():
+              diff = harmful_acts[idx] - harmless_acts[idx]
+              refusal_directions[idx] = diff / (torch.norm(diff) + 1e-8)
+
+          print("Computing baseline logits for KL-divergence anchor...")
+          baseline_logits = []
+          with torch.no_grad():
+              for prompt in NEUTRAL_CALIBRATION_PROMPTS:
+                  inputs = tokenizer(prompt, return_tensors="pt").to(DEVICE)
+                  out = model(**inputs)
+                  baseline_logits.append(out.logits.detach())
+
+          def apply_direction_ablation(model_obj, start_layer, end_layer, alpha):
+              modified_model = copy.deepcopy(model_obj)
+              for idx in range(start_layer, end_layer + 1):
+                  direction = refusal_directions[idx].unsqueeze(-1)
+                  layer = modified_model.model.layers[idx]
+                  if hasattr(layer, "mlp") and hasattr(layer.mlp, "down_proj"):
+                      W = layer.mlp.down_proj.weight.data
+                      proj = torch.matmul(direction, torch.matmul(direction.T, W))
+                      layer.mlp.down_proj.weight.data = W - alpha * proj
+              return modified_model
+
+          def objective(trial):
+              num_layers = len(model.model.layers)
+              start_layer = trial.suggest_int("start_layer", int(num_layers * 0.3), int(num_layers * 0.6))
+              end_layer = trial.suggest_int("end_layer", start_layer + 1, int(num_layers * 0.8))
+              alpha = trial.suggest_float("alpha", 0.1, 0.7)
+              
+              test_model = apply_direction_ablation(model, start_layer, end_layer, alpha)
+              test_model.eval()
+              
+              total_kl_loss = 0.0
+              with torch.no_grad():
+                  for i, prompt in enumerate(NEUTRAL_CALIBRATION_PROMPTS):
+                      inputs = tokenizer(prompt, return_tensors="pt").to(DEVICE)
+                      new_logits = test_model(**inputs).logits
+                      orig_logits = baseline_logits[i]
+                      
+                      p = F.log_softmax(new_logits, dim=-1)
+                      q = F.softmax(orig_logits, dim=-1)
+                      kl = F.kl_div(p, q, reduction="batchmean")
+                      total_kl_loss += kl.item()
+                      
+              del test_model
+              gc.collect()
+              
+              return total_kl_loss
+
+          print("Running Optuna hyperparameter optimization (10 trials)...")
+          optuna.logging.set_verbosity(optuna.logging.WARNING)
+          study = optuna.create_study(direction="minimize")
+          study.optimize(objective, n_trials=10)
+
+          best_params = study.best_params
+          print(f"Optimal parameters found: {best_params}")
+
+          print("Applying final optimized abliteration to model...")
+          final_model = apply_direction_ablation(
+              model, 
+              best_params["start_layer"], 
+              best_params["end_layer"], 
+              best_params["alpha"]
+          )
+
+          print(f"Saving abliterated model to {OUTPUT_PATH}...")
+          final_model.save_pretrained(OUTPUT_PATH)
+          tokenizer.save_pretrained(OUTPUT_PATH)
+          print("Abliteration complete!")
+          EOF
+
+          python3 cpu_heretic.py
+          rm -f cpu_heretic.py
           rm -rf /mnt/workspace/fuse-1-lite-v2-src    # Delete raw source files immediately to free disk space
 
       - name: Convert HF Safetensors to F16 GGUF
@@ -115,3 +265,4 @@ jobs:
           files: /mnt/workspace/fuse-1-Lite-v2-Heretic-IQ4_NL.gguf
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
