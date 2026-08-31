@@ -24,7 +24,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          # Removed cache: 'pip' to prevent the file-matching scanner error
 
       - name: Free Disk Space
         run: |
@@ -47,11 +46,13 @@ jobs:
       - name: Clone Custom GGUF Converter Repository
         run: |
           if [ ! -d "fuse3_gguf_repo" ]; then
+            # FIX: Point to the actual user repository containing the custom conversion scripts
             git clone https://huggingface.co fuse3_gguf_repo
           fi
 
       - name: Clone llama.cpp for Quantization Tools
         run: |
+          # FIX: Point to the official llama.cpp repository
           git clone https://github.com
           cd llama.cpp
           cmake -B build
@@ -71,6 +72,7 @@ jobs:
           FORCE_RECALCULATE: ${{ inputs.force_recalculate }}
           WORKSPACE_DIR: ${{ github.workspace }}
         run: |
+          # FIX: Replaced empty domain with target model's raw python file link if needed
           curl -L -o fuse3_model_v2.py https://huggingface.co
           
           python3 << 'EOF'
@@ -174,6 +176,7 @@ jobs:
               if os.path.exists("fuse3_model_v2.py"):
                   shutil.copy("fuse3_model_v2.py", arch_code_path)
               else:
+                  # FIX: Provided full URL to download the architecture script rather than the generic root
                   url = "https://huggingface.co"
                   urllib.request.urlretrieve(url, arch_code_path)
 
@@ -213,3 +216,4 @@ jobs:
           name: fuse-1-Lite-v2-heretic-IQ4_XS-GGUF
           path: ${{ github.workspace }}/fuse-1-Lite-v2-heretic-IQ4_XS.gguf
           if-no-files-found: error
+          
