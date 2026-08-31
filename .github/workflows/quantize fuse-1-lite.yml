@@ -7,16 +7,25 @@ jobs:
   quantize:
     runs-on: ubuntu-latest
     steps:
-      - name: Maximize Runner Disk Space & Set Swap
+      - name: Maximize Runner Disk Space & Set 8GB Swap
         uses: easimon/maximize-build-space@v10
         with:
-          root-reserve-mb: 8192
-          swap-size-mb: 16384
+          root-reserve-mb: 512
+          swap-size-mb: 8192      # 8GB swap + 7GB RAM = 15GB total virtual RAM
           remove-dotnet: 'true'
           remove-android: 'true'
           remove-haskell: 'true'
           remove-codeql: 'true'
           remove-docker-images: 'true'
+
+      - name: Free Pre-installed Disk Space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/share/swift
+          df -h
 
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -48,14 +57,17 @@ jobs:
       - name: Run Heretic Abliteration
         run: |
           heretic --model ./fuse-1-lite-v2-src --output ./fuse-1-lite-v2-heretic
+          rm -rf ./fuse-1-lite-v2-src    # Delete raw source files immediately
 
       - name: Convert HF Safetensors to F16 GGUF
         run: |
           python3 llama.cpp/convert_hf_to_gguf.py ./fuse-1-lite-v2-heretic --outtype f16 --outfile fuse-1-Lite-v2-Heretic-F16.gguf
+          rm -rf ./fuse-1-lite-v2-heretic  # Delete PyTorch weights immediately
 
       - name: Quantize to IQ4_NL
         run: |
           ./llama.cpp/build/bin/llama-quantize fuse-1-Lite-v2-Heretic-F16.gguf fuse-1-Lite-v2-Heretic-IQ4_NL.gguf IQ4_NL
+          rm -f fuse-1-Lite-v2-Heretic-F16.gguf # Delete intermediate F16 GGUF immediately
 
       - name: Upload IQ4_NL to GitHub Release
         uses: softprops/action-gh-release@v2
