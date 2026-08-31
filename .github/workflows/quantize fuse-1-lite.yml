@@ -58,8 +58,9 @@ jobs:
       - name: Run Heretic Abliteration
         env:
           HF_TRUST_REMOTE_CODE: "1"
+          PYTHONUNBUFFERED: "1"
         run: |
-          heretic --model ./fuse-1-lite-v2-src --study-checkpoint-dir ./fuse-1-lite-v2-heretic --trust-remote-code true
+          yes | heretic --model ./fuse-1-lite-v2-src --study-checkpoint-dir ./fuse-1-lite-v2-heretic
           rm -rf ./fuse-1-lite-v2-src    # Delete raw source files immediately to free disk space
 
       - name: Convert HF Safetensors to F16 GGUF
