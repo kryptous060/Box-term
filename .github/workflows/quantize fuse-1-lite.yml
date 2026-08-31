@@ -92,7 +92,7 @@ jobs:
             --study-checkpoint-dir /mnt/workspace/fuse-1-lite-v2-heretic \
             --batch-size 1 \
             --max-batch-size 1 \
-            --dtypes bfloat16 \
+            --dtypes float32 \
             --offload-outputs-to-cpu
           rm -rf /mnt/workspace/fuse-1-lite-v2-src    # Delete raw source files immediately to free disk space
 
