@@ -56,11 +56,15 @@ jobs:
           "
 
       - name: Run Heretic Abliteration
+        env:
+          HF_TRUST_REMOTE_CODE: "1"
         run: |
-          heretic --model ./fuse-1-lite-v2-src --study-checkpoint-dir ./fuse-1-lite-v2-heretic
+          heretic --model ./fuse-1-lite-v2-src --study-checkpoint-dir ./fuse-1-lite-v2-heretic --trust-remote-code true
           rm -rf ./fuse-1-lite-v2-src    # Delete raw source files immediately to free disk space
 
       - name: Convert HF Safetensors to F16 GGUF
+        env:
+          HF_TRUST_REMOTE_CODE: "1"
         run: |
           python3 llama.cpp/convert_hf_to_gguf.py ./fuse-1-lite-v2-heretic --outtype f16 --outfile fuse-1-Lite-v2-Heretic-F16.gguf
           rm -rf ./fuse-1-lite-v2-heretic  # Delete PyTorch weights immediately to free disk space
