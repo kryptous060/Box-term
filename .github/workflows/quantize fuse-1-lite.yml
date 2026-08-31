@@ -7,19 +7,29 @@ jobs:
   quantize:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Btrfs Compressed Mount & 16GB Swap
+      - name: Free Pre-installed Disk Space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /var/lib/docker
+          df -h
+
+      - name: Setup Btrfs Compressed Mount & Swap
         run: |
           # 1. Disable existing default swap
           sudo swapoff -a || true
 
-          # 2. Allocate 16GB Swapfile on host ext4 filesystem
-          sudo fallocate -l 16G /host_swap
+          # 2. Allocate 12GB Swapfile on host ext4 filesystem
+          sudo fallocate -l 12G /host_swap
           sudo chmod 600 /host_swap
           sudo mkswap /host_swap
           sudo swapon /host_swap
 
-          # 3. Create a 40GB sparse loop image for compressed Btrfs storage
-          truncate -s 40G /btrfs_disk.img
+          # 3. Create a 30GB sparse loop image for compressed Btrfs storage
+          sudo truncate -s 30G /btrfs_disk.img
           sudo mkfs.btrfs -f /btrfs_disk.img
           sudo mkdir -p /mnt/workspace
           sudo mount -o loop,compress=zstd:1 /btrfs_disk.img /mnt/workspace
