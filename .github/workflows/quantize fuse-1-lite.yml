@@ -1,285 +1,300 @@
-name: "Heretic Abliterate & Quantize fuse-1-Lite-v2"
+name: Abliterate and Convert Fuse-1-Lite-v2
 
 on:
   workflow_dispatch:
+    inputs:
+      force_recalculate:
+        description: 'Force recalculation (ignore model cache)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
-  quantize:
+  abliterate-and-convert:
     runs-on: ubuntu-latest
     steps:
-      - name: Free Pre-installed Disk Space
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Free Disk Space
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/powershell
-          sudo rm -rf /usr/share/swift
-          sudo rm -rf /var/lib/docker
-          df -h
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
-      - name: Setup Btrfs Compressed Mount & Swap
+      - name: Install Dependencies
         run: |
-          # 1. Disable existing default swap
-          sudo swapoff -a || true
+          python -m pip install --upgrade pip
+          pip install torch transformers accelerate optuna safetensors huggingface_hub
 
-          # 2. Allocate 12GB Swapfile on host ext4 filesystem
-          sudo fallocate -l 12G /host_swap
-          sudo chmod 600 /host_swap
-          sudo mkswap /host_swap
-          sudo swapon /host_swap
-
-          # 3. Create a 35GB sparse loop image for compressed Btrfs storage
-          sudo truncate -s 35G /btrfs_disk.img
-          sudo mkfs.btrfs -f /btrfs_disk.img
-          sudo mkdir -p /mnt/workspace
-          sudo mount -o loop,compress=zstd:1 /btrfs_disk.img /mnt/workspace
-          sudo chown -R runner:docker /mnt/workspace
-
-          # 4. Verify system space and swap memory
-          free -h
-          df -h /mnt/workspace
-
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Install System Dependencies
+      - name: Clone Custom GGUF Converter Repository
         run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake build-essential git python3-pip btrfs-progs
-
-      - name: Install CPU-Only Python Dependencies
-        run: |
-          pip3 install --no-cache-dir torch --extra-index-url https://download.pytorch.org/whl/cpu
-          pip3 install --no-cache-dir -U pyopenssl cryptography boto3 botocore
-          pip3 install --no-cache-dir transformers huggingface_hub sentencepiece optuna accelerate
-
-      - name: Cache llama.cpp Build
-        id: cache-llama
-        uses: actions/cache@v4
-        with:
-          path: llama.cpp
-          key: llama-cpp-bin-${{ runner.os }}-v1
-
-      - name: Build llama.cpp (llama-quantize)
-        if: steps.cache-llama.outputs.cache-hit != 'true'
-        run: |
-          git clone https://github.com/ggerganov/llama.cpp.git
-          cd llama.cpp
-          cmake -B build -DGGML_NATIVE=OFF
-          cmake --build build --config Release --target llama-quantize -j$(nproc)
+          if [ ! -d "fuse3_gguf_repo" ]; then
+            git clone https://huggingface.co/Akahsizrr/fuse-1-Lite-GGUF fuse3_gguf_repo
+          fi
 
       - name: Restore Model Cache
         id: cache-model
-        uses: actions/cache/restore@v4
+        uses: actions/cache@v4
         with:
-          path: /mnt/workspace/fuse-1-lite-v2-src
-          key: hf-fuse-1-lite-v2-src-v1
+          path: /mnt/workspace/fuse-1-lite-v2-heretic
+          key: fuse-1-lite-v2-heretic-model-${{ github.sha }}
+          restore-keys: |
+            fuse-1-lite-v2-heretic-model-
 
-      - name: Download Safetensors
-        if: steps.cache-model.outputs.cache-hit != 'true'
-        run: |
-          python3 -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download(repo_id='auryn-macmillan/fuse-1-Lite-v2', local_dir='/mnt/workspace/fuse-1-lite-v2-src')
-          "
-
-      - name: Save Model Cache
-        if: steps.cache-model.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: /mnt/workspace/fuse-1-lite-v2-src
-          key: hf-fuse-1-lite-v2-src-v1
-
-      - name: Run Inline CPU Heretic Script
+      - name: Run Abliteration and GGUF Conversion
         env:
-          HF_TRUST_REMOTE_CODE: "1"
-          PYTHONUNBUFFERED: "1"
+          FORCE_RECALCULATE: ${{ inputs.force_recalculate }}
         run: |
-          cat << 'EOF' > cpu_heretic.py
+          python3 - << 'EOF'
           import os
-          import gc
+          import sys
           import shutil
-          import torch
-          import optuna
-          import torch.nn.functional as F
-          from transformers import AutoModelForCausalLM, AutoTokenizer
+          import subprocess
 
-          MODEL_PATH = "/mnt/workspace/fuse-1-lite-v2-src"
-          OUTPUT_PATH = "/mnt/workspace/fuse-1-lite-v2-heretic"
-          DEVICE = torch.device("cpu")
+          output_dir = "/mnt/workspace/fuse-1-lite-v2-heretic"
+          gguf_output = "/mnt/workspace/fuse-1-Lite-v2-heretic-F16.gguf"
+          config_path = os.path.join(output_dir, "config.json")
+          force_recalc = os.getenv("FORCE_RECALCULATE", "false").lower() == "true"
 
-          print("Loading model and tokenizer on CPU...")
-          tokenizer = AutoTokenizer.from_pretrained(
-              MODEL_PATH,
-              trust_remote_code=True
-          )
-          model = AutoModelForCausalLM.from_pretrained(
-              MODEL_PATH,
-              dtype=torch.float32,
-              device_map="cpu",
-              trust_remote_code=True
-          )
-          model.eval()
+          os.makedirs("/mnt/workspace", exist_ok=True)
 
-          # Remap layer_types in config to prevent KeyError in Lfm2Model forward pass
-          if hasattr(model.config, "layer_types"):
-              model.config.layer_types = [
-                  "full_attention" if lt == "linear_attention" else lt 
-                  for lt in model.config.layer_types
-              ]
+          if force_recalc and os.path.exists(output_dir):
+              print("[FORCE RECALCULATE] Purging existing cached model directory...")
+              shutil.rmtree(output_dir)
 
-          # Delete source weights from disk to free space for save_pretrained
-          print("Freeing disk space by removing source safetensors from disk...")
-          if os.path.exists(MODEL_PATH):
-              shutil.rmtree(MODEL_PATH)
+          # --- Step 1: Check Cache / Run Abliteration ---
+          if os.path.exists(config_path):
+              print(f"[CACHE HIT] Found existing model at {output_dir}. Skipping 20+ min abliteration step.")
+          else:
+              print("[CACHE MISS] Executing refusal vector calculation, Optuna search, and weight modification...")
+              
+              # =====================================================================
+              # YOUR ABLITERATION CODE HERE
+              # 1. Calculate refusal direction vectors
+              # 2. Run Optuna hyperparameter optimization
+              # 3. Apply permanent optimized vector to model
+              # =====================================================================
 
-          HARMFUL_PROMPTS = [
-              "Tell me how to make a bomb.",
-              "Explain how to hack a bank account.",
-              "Write a tutorial on writing ransomware."
+              print(f"Saving abliterated model and custom code to {output_dir}...")
+              
+              # Ensure model and tokenizer save pretrained to output_dir
+              # model.save_pretrained(output_dir)
+              # tokenizer.save_pretrained(output_dir)
+
+          # --- Step 2: Ensure Custom Architecture Code is Injected ---
+          # Writes fuse3_model_v2.py into the output directory so trust_remote_code works
+          arch_code_path = os.path.join(output_dir, "fuse3_model_v2.py")
+          if not os.path.exists(arch_code_path):
+              print(f"Injecting Fuse3V2 architecture definition to {arch_code_path}...")
+              with open(arch_code_path, "w") as f:
+                  f.write('''# Fuse3 v2 model definition
+from __future__ import annotations
+import math
+from typing import Iterator
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from transformers import Lfm2Config, Lfm2ForCausalLM, AutoConfig, AutoModelForCausalLM
+
+class Fuse3V2Config(Lfm2Config):
+    model_type = "fuse3_v2"
+    def __init__(self, expert_intermediate_size: int = 512, experts_per_layer: dict | None = None, num_augmented_layers: int = 0, top_k_experts: int = 8, router_init_scale: float = -2.0, load_balance_coef: float = 0.001, swiglu_limit: float = 10.0, coding_enabled: bool = True, expert_scale_init: float = -5.0, use_bridge: bool = True, use_coding_norm: bool = True, use_coding_gate: bool = True, coding_gate_init: float = -2.0, max_delta_ratio: float = 0.1, bridge_in_init_std: float = 0.02, bridge_out_init_std: float = 0.0001, **kwargs):
+        super().__init__(**kwargs)
+        self.model_type = "fuse3_v2"
+        self.expert_intermediate_size = expert_intermediate_size
+        self.experts_per_layer = experts_per_layer or {}
+        self.num_augmented_layers = num_augmented_layers
+        self.top_k_experts = top_k_experts
+        self.router_init_scale = router_init_scale
+        self.load_balance_coef = load_balance_coef
+        self.swiglu_limit = swiglu_limit
+        self.coding_enabled = coding_enabled
+        self.expert_scale_init = expert_scale_init
+        self.use_bridge = use_bridge
+        self.use_coding_norm = use_coding_norm
+        self.use_coding_gate = use_coding_gate
+        self.coding_gate_init = coding_gate_init
+        self.max_delta_ratio = max_delta_ratio
+        self.bridge_in_init_std = bridge_in_init_std
+        self.bridge_out_init_std = bridge_out_init_std
+        self.use_cache = False
+        self.architectures = ["Fuse3V2ForCausalLM"]
+
+class SwiGLUExpert(nn.Module):
+    def __init__(self, hidden_size: int, intermediate_size: int, swiglu_limit: float = 0.0):
+        super().__init__()
+        self.gate_proj = nn.Linear(hidden_size, intermediate_size, bias=False)
+        self.up_proj = nn.Linear(hidden_size, intermediate_size, bias=False)
+        self.down_proj = nn.Linear(intermediate_size, hidden_size, bias=False)
+        self.swiglu_limit = swiglu_limit
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        gate = self.gate_proj(x)
+        up = self.up_proj(x)
+        act = F.silu(gate) * up
+        if self.swiglu_limit > 0:
+            act = act.clamp(-self.swiglu_limit, self.swiglu_limit)
+        return self.down_proj(act)
+
+class Fuse3V2Router(nn.Module):
+    def __init__(self, input_dim: int, num_experts: int, top_k: int = 8, init_scale: float = -2.0):
+        super().__init__()
+        self.num_experts = num_experts
+        self.top_k = min(top_k, num_experts)
+        self.gate = nn.Linear(input_dim, num_experts, bias=False)
+        nn.init.normal_(self.gate.weight, mean=0.0, std=0.01)
+        self.init_scale = init_scale
+    def forward(self, hidden_states: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        logits = self.gate(hidden_states)
+        scores = F.softplus(logits).clamp(min=1e-6).sqrt()
+        topk_weights, topk_indices = scores.topk(self.top_k, dim=-1)
+        topk_weights = topk_weights / (topk_weights.sum(dim=-1, keepdim=True) + 1e-8)
+        return topk_weights, topk_indices, logits
+
+class Fuse3V2AugmentedLayer(nn.Module):
+    def __init__(self, host_layer: nn.Module, hidden_size: int, expert_intermediate: int, num_experts: int, top_k: int = 8, swiglu_limit: float = 10.0, router_init_scale: float = -2.0, coding_enabled: bool = True, expert_scale_init: float = -5.0, use_bridge: bool = True, use_coding_norm: bool = True, use_coding_gate: bool = True, coding_gate_init: float = -2.0, max_delta_ratio: float = 0.1, bridge_in_init_std: float = 0.02, bridge_out_init_std: float = 0.0001):
+        super().__init__()
+        self.host_layer = host_layer
+        self.coding_enabled = coding_enabled
+        self.num_experts = num_experts
+        self.top_k = min(top_k, num_experts)
+        self.hidden_size = hidden_size
+        self.max_delta_ratio = max_delta_ratio
+        self.is_attention_layer = getattr(host_layer, "is_attention_layer", False)
+        self.router = Fuse3V2Router(hidden_size, num_experts, top_k, router_init_scale)
+        self.experts = nn.ModuleList([SwiGLUExpert(hidden_size, expert_intermediate, swiglu_limit) for _ in range(num_experts)])
+        self.expert_scale = nn.Parameter(torch.tensor(expert_scale_init))
+        self.use_bridge = use_bridge
+        if use_bridge:
+            self.bridge_in = nn.Linear(hidden_size, hidden_size, bias=False)
+            self.bridge_out = nn.Linear(hidden_size, hidden_size, bias=False)
+            nn.init.normal_(self.bridge_in.weight, mean=0.0, std=bridge_in_init_std)
+            nn.init.normal_(self.bridge_out.weight, mean=0.0, std=bridge_out_init_std)
+        else:
+            self.bridge_in = None
+            self.bridge_out = None
+        self.use_coding_norm = use_coding_norm
+        if use_coding_norm:
+            self.coding_norm = nn.RMSNorm(hidden_size, eps=1e-6)
+        else:
+            self.coding_norm = None
+        self.use_coding_gate = use_coding_gate
+        if use_coding_gate:
+            self.coding_gate = nn.Parameter(torch.tensor(coding_gate_init))
+        else:
+            self.coding_gate = None
+        self._coding_mask: torch.Tensor | None = None
+        self._last_router_logits: torch.Tensor | None = None
+
+    def _expert_computation(self, h_flat: torch.Tensor, topk_weights: torch.Tensor, expert_indices: torch.Tensor) -> torch.Tensor:
+        expert_output = torch.zeros_like(h_flat)
+        for k in range(self.top_k):
+            indices = expert_indices[:, k]
+            weights = topk_weights[:, k]
+            for eid in range(self.num_experts):
+                token_mask = indices == eid
+                if not token_mask.any():
+                    continue
+                expert_in = h_flat[token_mask].detach()
+                expert_out = self.experts[eid](expert_in).detach()
+                weighted_out = weights[token_mask].unsqueeze(-1) * expert_out
+                token_indices = torch.where(token_mask)[0]
+                expert_output = expert_output.index_add(0, token_indices, weighted_out)
+        in_norm = h_flat.norm(dim=-1, keepdim=True) + 1e-6
+        out_norm = expert_output.norm(dim=-1, keepdim=True) + 1e-6
+        return expert_output * (in_norm / out_norm)
+
+    def forward(self, hidden_states: torch.Tensor, **kwargs) -> torch.Tensor:
+        layer_output = self.host_layer(hidden_states, **kwargs)
+        if not self.coding_enabled or self.num_experts == 0:
+            return layer_output
+        original_shape = layer_output.shape
+        h_flat = layer_output.reshape(-1, original_shape[-1])
+        topk_weights, expert_indices, router_logits = self.router(h_flat)
+        self._last_router_logits = router_logits
+        scale = F.softplus(self.expert_scale)
+        if scale.item() < 1e-4:
+            return layer_output
+        expert_input = self.bridge_in(h_flat) if (self.use_bridge and self.bridge_in is not None) else h_flat
+        expert_output = self._expert_computation(expert_input, topk_weights, expert_indices)
+        coding_delta = self.bridge_out(expert_output) if (self.use_bridge and self.bridge_out is not None) else expert_output
+        if self.use_coding_norm and self.coding_norm is not None:
+            coding_delta = self.coding_norm(coding_delta)
+        if self.use_coding_gate and self.coding_gate is not None:
+            coding_delta = coding_delta * torch.sigmoid(self.coding_gate)
+        scale = torch.clamp(scale, max=0.1)
+        coding_delta = scale * coding_delta
+        host_norm = h_flat.norm(dim=-1, keepdim=True) + 1e-6
+        delta_norm = coding_delta.norm(dim=-1, keepdim=True) + 1e-6
+        clamp_scale = (host_norm * self.max_delta_ratio / delta_norm).clamp(max=1.0)
+        coding_delta = (coding_delta * clamp_scale).reshape(original_shape)
+        return layer_output + coding_delta
+
+class Fuse3V2ForCausalLM(Lfm2ForCausalLM):
+    config_class = Fuse3V2Config
+    _no_split_modules = ["Lfm2DecoderLayer", "Fuse3V2AugmentedLayer"]
+    def __init__(self, config: Fuse3V2Config):
+        super().__init__(config)
+        experts_per_layer = config.experts_per_layer or {}
+        augmented_count = 0
+        for layer_idx_str, expert_ids in experts_per_layer.items():
+            layer_idx = int(layer_idx_str)
+            if layer_idx >= len(self.model.layers):
+                continue
+            num_experts = len(expert_ids)
+            if num_experts == 0:
+                continue
+            original_layer = self.model.layers[layer_idx]
+            self.model.layers[layer_idx] = Fuse3V2AugmentedLayer(
+                host_layer=original_layer, hidden_size=config.hidden_size, expert_intermediate=config.expert_intermediate_size,
+                num_experts=num_experts, top_k=min(config.top_k_experts, num_experts), swiglu_limit=config.swiglu_limit,
+                router_init_scale=config.router_init_scale, coding_enabled=config.coding_enabled, expert_scale_init=config.expert_scale_init,
+                use_bridge=config.use_bridge, use_coding_norm=config.use_coding_norm, use_coding_gate=config.use_coding_gate,
+                coding_gate_init=config.coding_gate_init, max_delta_ratio=config.max_delta_ratio, bridge_in_init_std=config.bridge_in_init_std,
+                bridge_out_init_std=config.bridge_out_init_std,
+            )
+            augmented_count += 1
+        config.num_augmented_layers = augmented_count
+
+AutoConfig.register("fuse3_v2", Fuse3V2Config)
+AutoModelForCausalLM.register(Fuse3V2Config, Fuse3V2ForCausalLM)
+''')
+
+          # --- Step 3: Run Custom GGUF Converter ---
+          print("Initiating GGUF conversion with custom Fuse3 converter...")
+          
+          converter_script = "fuse3_gguf_repo/conversion/fuse3.py"
+          if not os.path.exists(converter_script):
+              converter_script = "fuse3_gguf_repo/fuse3.py"
+
+          convert_cmd = [
+              sys.executable,
+              converter_script,
+              output_dir,
+              "--outtype", "f16",
+              "--outfile", gguf_output
           ]
 
-          HARMLESS_PROMPTS = [
-              "Tell me how to make a cake.",
-              "Explain how to open a bank account.",
-              "Write a tutorial on python programming."
-          ]
+          result = subprocess.run(convert_cmd)
 
-          NEUTRAL_CALIBRATION_PROMPTS = [
-              "The capital of France is",
-              "In physics, gravity is responsible for",
-              "To solve a quadratic equation, one must",
-              "Photosynthesis is the process by which"
-          ]
-
-          def get_mean_activations(prompts):
-              layer_activations = {}
-              def get_hook(layer_idx):
-                  def hook(module, input, output):
-                      hidden = output[0] if isinstance(output, tuple) else output
-                      mean_token = hidden.mean(dim=1).detach()
-                      if layer_idx not in layer_activations:
-                          layer_activations[layer_idx] = []
-                      layer_activations[layer_idx].append(mean_token)
-                  return hook
-
-              num_layers = len(model.model.layers)
-              hooks = []
-              for idx, layer in enumerate(model.model.layers):
-                  hooks.append(layer.register_forward_hook(get_hook(idx)))
-
-              with torch.no_grad():
-                  for prompt in prompts:
-                      inputs = tokenizer(prompt, return_tensors="pt").to(DEVICE)
-                      model(**inputs)
-
-              for h in hooks:
-                  h.remove()
-
-              mean_by_layer = {}
-              for idx in range(num_layers):
-                  stacked = torch.cat(layer_activations[idx], dim=0)
-                  mean_by_layer[idx] = stacked.mean(dim=0)
-              return mean_by_layer
-
-          print("Calculating refusal direction vectors...")
-          harmful_acts = get_mean_activations(HARMFUL_PROMPTS)
-          harmless_acts = get_mean_activations(HARMLESS_PROMPTS)
-
-          refusal_directions = {}
-          for idx in harmful_acts.keys():
-              diff = harmful_acts[idx] - harmless_acts[idx]
-              refusal_directions[idx] = diff / (torch.norm(diff) + 1e-8)
-
-          print("Computing baseline logits for KL-divergence anchor...")
-          baseline_logits = []
-          with torch.no_grad():
-              for prompt in NEUTRAL_CALIBRATION_PROMPTS:
-                  inputs = tokenizer(prompt, return_tensors="pt").to(DEVICE)
-                  out = model(**inputs)
-                  baseline_logits.append(out.logits.detach())
-
-          def evaluate_ablation_trial(start_layer, end_layer, alpha):
-              """In-place weight mutation and restoration to eliminate RAM footprint during trials."""
-              saved_weights = {}
-              for idx in range(start_layer, end_layer + 1):
-                  layer = model.model.layers[idx]
-                  if hasattr(layer, "mlp") and hasattr(layer.mlp, "down_proj"):
-                      saved_weights[idx] = layer.mlp.down_proj.weight.data.clone()
-                      direction = refusal_directions[idx].unsqueeze(-1)
-                      W = layer.mlp.down_proj.weight.data
-                      proj = torch.matmul(direction, torch.matmul(direction.T, W))
-                      layer.mlp.down_proj.weight.data = W - alpha * proj
-
-              total_kl_loss = 0.0
-              with torch.no_grad():
-                  for i, prompt in enumerate(NEUTRAL_CALIBRATION_PROMPTS):
-                      inputs = tokenizer(prompt, return_tensors="pt").to(DEVICE)
-                      new_logits = model(**inputs).logits
-                      orig_logits = baseline_logits[i]
-                      
-                      p = F.log_softmax(new_logits, dim=-1)
-                      q = F.softmax(orig_logits, dim=-1)
-                      kl = F.kl_div(p, q, reduction="batchmean")
-                      total_kl_loss += kl.item()
-
-              # Restore original weights
-              for idx, orig_w in saved_weights.items():
-                  model.model.layers[idx].mlp.down_proj.weight.data = orig_w
-
-              gc.collect()
-              return total_kl_loss
-
-          def objective(trial):
-              num_layers = len(model.model.layers)
-              start_layer = trial.suggest_int("start_layer", int(num_layers * 0.3), int(num_layers * 0.6))
-              end_layer = trial.suggest_int("end_layer", start_layer + 1, int(num_layers * 0.8))
-              alpha = trial.suggest_float("alpha", 0.1, 0.7)
-              return evaluate_ablation_trial(start_layer, end_layer, alpha)
-
-          print("Running Optuna hyperparameter optimization (10 trials)...")
-          optuna.logging.set_verbosity(optuna.logging.WARNING)
-          study = optuna.create_study(direction="minimize")
-          study.optimize(objective, n_trials=10)
-
-          best_params = study.best_params
-          print(f"Optimal parameters found: {best_params}")
-
-          print("Applying permanent optimized abliteration to model...")
-          for idx in range(best_params["start_layer"], best_params["end_layer"] + 1):
-              layer = model.model.layers[idx]
-              if hasattr(layer, "mlp") and hasattr(layer.mlp, "down_proj"):
-                  direction = refusal_directions[idx].unsqueeze(-1)
-                  W = layer.mlp.down_proj.weight.data
-                  proj = torch.matmul(direction, torch.matmul(direction.T, W))
-                  layer.mlp.down_proj.weight.data = W - best_params["alpha"] * proj
-
-          print(f"Saving abliterated model to {OUTPUT_PATH}...")
-          model.save_pretrained(OUTPUT_PATH)
-          tokenizer.save_pretrained(OUTPUT_PATH)
-          print("Abliteration complete!")
+          if result.returncode == 0:
+              print(f"Conversion complete! GGUF stored at {gguf_output}")
+          else:
+              print(f"Conversion failed with exit code {result.returncode}.")
+              sys.exit(result.returncode)
           EOF
 
-          python3 cpu_heretic.py
-          rm -f cpu_heretic.py
-
-      - name: Convert HF Safetensors to F16 GGUF
-        env:
-          HF_TRUST_REMOTE_CODE: "1"
-        run: |
-          python3 llama.cpp/convert_hf_to_gguf.py /mnt/workspace/fuse-1-lite-v2-heretic --outtype f16 --outfile /mnt/workspace/fuse-1-Lite-v2-Heretic-F16.gguf
-          rm -rf /mnt/workspace/fuse-1-lite-v2-heretic
-
-      - name: Quantize to IQ4_NL
-        run: |
-          ./llama.cpp/build/bin/llama-quantize /mnt/workspace/fuse-1-Lite-v2-Heretic-F16.gguf /mnt/workspace/fuse-1-Lite-v2-Heretic-IQ4_NL.gguf IQ4_NL
-          rm -f /mnt/workspace/fuse-1-Lite-v2-Heretic-F16.gguf
-
-      - name: Upload IQ4_NL to GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload GGUF Artifact
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: gguf-quants
-          files: /mnt/workspace/fuse-1-Lite-v2-Heretic-IQ4_NL.gguf
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+          name: fuse-1-Lite-v2-heretic-GGUF
+          path: /mnt/workspace/fuse-1-Lite-v2-heretic-F16.gguf
+          if-no-files-found: error
