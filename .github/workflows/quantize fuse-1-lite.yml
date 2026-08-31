@@ -60,12 +60,27 @@ jobs:
           cmake -B build -DGGML_NATIVE=OFF
           cmake --build build --config Release --target llama-quantize -j$(nproc)
 
+      - name: Restore Model Cache
+        id: cache-model
+        uses: actions/cache/restore@v4
+        with:
+          path: /mnt/workspace/fuse-1-lite-v2-src
+          key: hf-fuse-1-lite-v2-src-v1
+
       - name: Download Safetensors
+        if: steps.cache-model.outputs.cache-hit != 'true'
         run: |
           python3 -c "
           from huggingface_hub import snapshot_download
           snapshot_download(repo_id='auryn-macmillan/fuse-1-Lite-v2', local_dir='/mnt/workspace/fuse-1-lite-v2-src')
           "
+
+      - name: Save Model Cache
+        if: steps.cache-model.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /mnt/workspace/fuse-1-lite-v2-src
+          key: hf-fuse-1-lite-v2-src-v1
 
       - name: Run Heretic Abliteration
         env:
@@ -77,7 +92,7 @@ jobs:
             --study-checkpoint-dir /mnt/workspace/fuse-1-lite-v2-heretic \
             --batch-size 1 \
             --max-batch-size 1 \
-            --dtypes bfloat16 float32 \
+            --dtypes bfloat16 \
             --offload-outputs-to-cpu
           rm -rf /mnt/workspace/fuse-1-lite-v2-src    # Delete raw source files immediately to free disk space
 
