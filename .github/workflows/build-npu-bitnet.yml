@@ -25,7 +25,7 @@ jobs:
 
       - name: Setup Android NDK (Android Target Only)
         if: matrix.target == 'android-arm64'
-        uses: nttld/setup-ndk@v3
+        uses: android-actions/setup-android@v3
         with:
           ndk-version: r26c
           add-to-path: true
