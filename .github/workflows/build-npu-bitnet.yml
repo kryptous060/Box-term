@@ -1,0 +1,45 @@
+yaml
+name: Build BitNet Ternary llama.cpp (NPU & Windows)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-bitnet-binaries:
+    strategy:
+      matrix:
+        include:
+          - target: android-arm64
+            os: ubuntu-latest
+            cmake_args: "-DCMAKE_SYSTEM_NAME=Android -DCMAKE_SYSTEM_VERSION=31 -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a -DGGML_NATIVE=OFF"
+            artifact_name: pkg-bitnet-android-arm64
+          - target: windows-x64
+            os: windows-latest
+            cmake_args: "-A x64 -DGGML_NATIVE=ON"
+            artifact_name: pkg-bitnet-windows-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Clone Microsoft BitNet (Ternary Branch)
+        run: git clone --recursive https://github.com/microsoft/BitNet.git bitnet_src
+
+      - name: Configure CMake and Build Binaries (${{ matrix.target }})
+        shell: bash
+        run: |
+          cd bitnet_src
+          cmake -B build ${{ matrix.cmake_args }} -DBUILD_SHARED_LIBS=OFF
+          cmake --build build --config Release -j4
+          
+          # Package results cleanly
+          mkdir -p pkg-${{ matrix.target }}
+          find build -type f \( -name "llama-cli*" -o -name "llama-server*" -o -name "llama-quantize*" -o -name "*.a" -o -name "*.lib" \) -exec cp {} pkg-${{ matrix.target }}/ \;
+
+      - name: Upload Ternary Binaries & Libraries Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: bitnet_src/pkg-${{ matrix.target }}/
