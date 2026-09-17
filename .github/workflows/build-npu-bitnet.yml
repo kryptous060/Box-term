@@ -1,5 +1,4 @@
-yaml
-name: Build BitNet Ternary llama.cpp (NPU & Windows)
+name: Build BitNet Ternary llama.cpp
 
 on:
   push:
@@ -7,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-bitnet-binaries:
+  build:
     strategy:
       matrix:
         include:
@@ -24,21 +23,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Clone Microsoft BitNet (Ternary Branch)
+      - name: Clone Microsoft BitNet
         run: git clone --recursive https://github.com/microsoft/BitNet.git bitnet_src
 
-      - name: Configure CMake and Build Binaries (${{ matrix.target }})
+      - name: Build Binaries
         shell: bash
         run: |
           cd bitnet_src
           cmake -B build ${{ matrix.cmake_args }} -DBUILD_SHARED_LIBS=OFF
           cmake --build build --config Release -j4
-          
-          # Package results cleanly
           mkdir -p pkg-${{ matrix.target }}
           find build -type f \( -name "llama-cli*" -o -name "llama-server*" -o -name "llama-quantize*" -o -name "*.a" -o -name "*.lib" \) -exec cp {} pkg-${{ matrix.target }}/ \;
 
-      - name: Upload Ternary Binaries & Libraries Artifact
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
