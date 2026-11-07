@@ -14,6 +14,12 @@ jobs:
           ref: '98a74c97ea09ac72f6ceda1559808fc0a2f447ce'
           submodules: recursive
 
+      - name: Install CUDA Toolkit
+        uses: Jimver/cuda-toolkit@v0.2.36
+        with:
+          cuda: '12.8.0'
+          sub-packages: '["nvcc", "cudart"]'
+
       - name: Configure CMake with CUDA (Turing RTX 2070 Max-Q / sm_75)
         run: |
           cmake -S . -B build-win -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES="75" -DLLAMA_BUILD_SERVER=ON -DLLAMA_BUILD_UI=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF
